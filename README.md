@@ -83,6 +83,27 @@ iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与�
 - iOS：按 mobile-mcp 文档的 iOS 通道完成配对与信任
 - **建议开启屏幕常亮**（开发者选项里的「充电时不锁定屏幕」，或把自动锁屏调到最长时间）。跑满 60 分钟的任务期间屏幕一旦熄灭，滑动与识屏都会失效，skill 会误判为卡死。
 
+### 不需要无障碍权限
+
+**本 skill 不需要你在手机里开启「无障碍 / Accessibility」服务，只要 USB 调试即可。** 不用去找那个开关，也无需 root。
+
+原因是 mobile-mcp 完全走 adb shell 通道（运行身份 `uid=2000(shell)`），各环节实现如下：
+
+| 能力 | 实现 | 依赖 |
+|---|---|---|
+| 识屏（元素列表） | `adb exec-out uiautomator dump /dev/tty`，解析 XML 取 text / content-desc / hint / resource-id / bounds | USB 调试 |
+| 截图 | `adb exec-out screencap -p` | USB 调试 |
+| 点击 / 滑动 | `input tap` / `input swipe` | USB 调试 |
+| 返回 / 按键 | `input keyevent` | USB 调试 |
+| 启动 App | `am start` / `am force-stop` | USB 调试 |
+| iOS 识屏 | WebDriverAgent（XCTest）的 `/source?format=json` | WDA + 端口转发 |
+
+> 容易混淆的一点：`uiautomator` 底层确实是 `android.app.UiAutomation`，会与系统的 AccessibilityManagerService 交互，但那是 **instrumentation / shell 的系统级通道**，不等同于「设置 → 无障碍 → 已下载的服务」里需要用户手动逐个开启的第三方无障碍服务。
+>
+> 实测佐证：华为 Mate 30 Pro（Android 12）上 `settings get secure enabled_accessibility_services` 返回**空**（未启用任何无障碍服务），`mobile_list_elements_on_screen` 依然正常返回完整元素树。
+
+**唯一的例外是中文输入**：`adb shell input text` 只支持 ASCII，输入中文需要额外安装 `com.mobilenext.devicekit`（见 [devicekit-android](https://github.com/mobile-next/devicekit-android)），否则会直接报 `Non-ASCII text is not supported`。本 skill 的搜索型任务走的是「点推荐词」路线，不依赖中文输入，因此通常无需安装；只有你想让它手输关键词时才需要。
+
 ## 文件结构
 
 ```
