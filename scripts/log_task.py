@@ -64,7 +64,12 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
 
     # Per-slot progress: a slot is one (module, task name) pair that may be
     # executed several rounds until its (n/N) counter is maxed out.
+    # NOTE: --progress holds the counter read at the START of a round, so the
+    # last round of a filled slot always shows (N-1)/N. We therefore also treat
+    # an explicit "做满" in the note as proof the slot actually reached N/N.
     slots = {}
+    slot_full = {}
+    slot_truncated = {}
     for t in tasks:
         if not t.get("progress"):
             continue
@@ -76,12 +81,25 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
         cur = slots.get(key)
         if cur is None or (n, total) >= (cur[0], cur[1]):
             slots[key] = (n, total)
+        note = t.get("note") or ""
+        if "做满" in note:
+            slot_full[key] = True
+        elif "截断" in note:
+            slot_truncated[key] = note
     if slots:
-        full = sum(1 for (n, total) in slots.values() if total and n >= total)
+        full = 0
         lines.append("## 多轮槽位进度\n")
         for (module, name), (n, total) in slots.items():
-            flag = "做满 ✅" if total and n >= total else "未满 ⏳"
-            lines.append(f"- {module} · {name}：{n}/{total} {flag}")
+            key = (module, name)
+            if slot_full.get(key):
+                full += 1
+                flag, shown = "做满 ✅", f"{total}/{total}"
+            elif slot_truncated.get(key):
+                flag, shown = "被截断 ⚠️", f"{n}/{total}"
+            else:
+                flag, shown = "未满 ⏳", f"{n}/{total}"
+            extra = f"（{slot_truncated[key]}）" if flag == "被截断 ⚠️" and slot_truncated[key] != "截断" else ""
+            lines.append(f"- {module} · {name}：{shown} {flag}{extra}")
         lines.append(f"\n共 {len(slots)} 个多轮槽位，其中做满 {full} 个\n")
 
     lines.append("## 任务明细\n")
