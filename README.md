@@ -1,6 +1,6 @@
 # taobao-browse-tasks
 
-一个 [WorkBuddy](https://www.workbuddy.cn) / Claude-style Agent Skill：通过 [mobile-mcp](https://github.com/mobile-next/mobile-mcp) 驱动一台已连接的 Android 真机，在淘宝 App 内自动完成「芭芭农场」和「淘金币」的**浏览类任务**（浏览 / 逛店 15~20 秒领奖励）。
+一个 Agent Skill：通过 [mobile-mcp](https://github.com/mobile-next/mobile-mcp) 驱动一台已连接的手机，在淘宝 App 内自动完成「芭芭农场」和「淘金币」的**浏览类任务**（浏览 / 逛店 15~20 秒领奖励）。
 
 说一句「刷淘宝任务」「做芭芭农场」「赚更多金币」即可触发。
 
