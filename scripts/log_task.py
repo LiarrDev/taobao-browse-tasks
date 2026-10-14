@@ -24,6 +24,8 @@ from datetime import datetime
 
 VERDICTS = ["BROWSE", "GAME", "THIRD_PARTY", "OTHER", "DONE", "UNKNOWN"]
 RESULTS = ["完成", "跳过", "失败"]
+# Progress is tracked per logged round, e.g. "3/5"; the same task name may
+# appear many times, once per round, until it reaches N/N.
 
 
 def load_tasks(tasks_log: str) -> list:
@@ -52,22 +54,45 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
     lines.append(f"- 结束时间：{finished_at or '（进行中）'}")
     lines.append(f"- 设备：{meta.get('device') or '（未指定）'}")
     lines.append(f"- 模块：{'、'.join(meta.get('modules', []))}")
-    lines.append(f"- 安全上限：最多 {meta.get('max_tasks')} 个任务 / {meta.get('max_minutes')} 分钟\n")
+    lines.append(f"- 安全上限：最多 {meta.get('max_tasks')} 轮 / {meta.get('max_minutes')} 分钟\n")
     lines.append("## 汇总\n")
-    lines.append(f"- 完成：{len(done)} 个（累计浏览 {total_seconds} 秒）")
+    lines.append(f"- 完成：{len(done)} 轮（累计浏览 {total_seconds} 秒）")
     lines.append(f"- 跳过：{len(skipped)} 个")
     for v in ["GAME", "THIRD_PARTY", "OTHER", "DONE"]:
         lines.append(f"  - {v}：{len([t for t in skipped if t.get('verdict') == v])} 个")
     lines.append(f"- 失败：{len(failed)} 个\n")
+
+    # Per-slot progress: a slot is one (module, task name) pair that may be
+    # executed several rounds until its (n/N) counter is maxed out.
+    slots = {}
+    for t in tasks:
+        if not t.get("progress"):
+            continue
+        key = (t.get("module", ""), t.get("name", ""))
+        try:
+            n, total = (int(x) for x in str(t["progress"]).split("/", 1))
+        except ValueError:
+            continue
+        cur = slots.get(key)
+        if cur is None or (n, total) >= (cur[0], cur[1]):
+            slots[key] = (n, total)
+    if slots:
+        full = sum(1 for (n, total) in slots.values() if total and n >= total)
+        lines.append("## 多轮槽位进度\n")
+        for (module, name), (n, total) in slots.items():
+            flag = "做满 ✅" if total and n >= total else "未满 ⏳"
+            lines.append(f"- {module} · {name}：{n}/{total} {flag}")
+        lines.append(f"\n共 {len(slots)} 个多轮槽位，其中做满 {full} 个\n")
+
     lines.append("## 任务明细\n")
-    lines.append("| # | 模块 | 任务 | 判定 | 结果 | 停留 | 备注 |")
-    lines.append("|---|------|------|------|------|------|------|")
+    lines.append("| # | 模块 | 任务 | 进度 | 判定 | 结果 | 停留 | 备注 |")
+    lines.append("|---|------|------|------|------|------|------|------|")
     for i, t in enumerate(tasks, 1):
         secs = t.get("seconds")
         stay = f"{secs}s" if secs else "-"
         lines.append(
-            f"| {i} | {t.get('module', '')} | {t.get('name', '')} | {t.get('verdict', '')} "
-            f"| {t.get('result', '')} | {stay} | {t.get('note', '')} |"
+            f"| {i} | {t.get('module', '')} | {t.get('name', '')} | {t.get('progress') or '-'} "
+            f"| {t.get('verdict', '')} | {t.get('result', '')} | {stay} | {t.get('note', '')} |"
         )
     if not tasks:
         lines.append("| - | - | 暂无记录 | - | - | - | - |")
@@ -86,6 +111,11 @@ def main() -> int:
     parser.add_argument("--verdict", default="UNKNOWN", choices=VERDICTS)
     parser.add_argument("--result", default="跳过", choices=RESULTS)
     parser.add_argument("--seconds", type=int, default=0, help="Actual browse duration")
+    parser.add_argument(
+        "--progress",
+        default="",
+        help="Multi-round progress read from the task row, e.g. 3/5. Log one row per round.",
+    )
     parser.add_argument("--note", default="", help="Reason or evidence")
     parser.add_argument("--finish", action="store_true", help="Mark the run as finished")
     args = parser.parse_args()
@@ -113,6 +143,7 @@ def main() -> int:
                 "verdict": args.verdict,
                 "result": args.result,
                 "seconds": args.seconds,
+                "progress": args.progress,
                 "note": args.note,
             }
         )

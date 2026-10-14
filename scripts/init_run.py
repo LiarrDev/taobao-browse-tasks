@@ -33,8 +33,8 @@ def main() -> int:
         help="farm=芭芭农场, coins=淘金币, both=两个都跑 (default: both)",
     )
     parser.add_argument("--device", default="", help="Android device id reported by mobile_list_available_devices")
-    parser.add_argument("--max-tasks", type=int, default=30, help="Safety cap on completed tasks (default: 30)")
-    parser.add_argument("--max-minutes", type=int, default=20, help="Safety cap on wall clock minutes (default: 20)")
+    parser.add_argument("--max-tasks", type=int, default=150, help="Safety cap on completed task rounds (default: 150)")
+    parser.add_argument("--max-minutes", type=int, default=60, help="Safety cap on wall clock minutes (default: 60)")
     parser.add_argument(
         "--dir",
         default=DEFAULT_ROOT,
@@ -69,10 +69,10 @@ def main() -> int:
         fh.write(f"- 开始时间：{meta['started_at']}\n")
         fh.write(f"- 设备：{meta['device'] or '（未指定）'}\n")
         fh.write(f"- 模块：{'、'.join(meta['modules'])}\n")
-        fh.write(f"- 安全上限：最多 {meta['max_tasks']} 个任务 / {meta['max_minutes']} 分钟\n\n")
+        fh.write(f"- 安全上限：最多 {meta['max_tasks']} 轮 / {meta['max_minutes']} 分钟\n\n")
         fh.write("## 任务明细\n\n")
-        fh.write("| # | 模块 | 任务 | 判定 | 结果 | 停留 | 备注 |\n")
-        fh.write("|---|------|------|------|------|------|------|\n")
+        fh.write("| # | 模块 | 任务 | 进度 | 判定 | 结果 | 停留 | 备注 |\n")
+        fh.write("|---|------|------|------|------|------|------|------|\n")
 
     print(
         json.dumps(
