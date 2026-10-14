@@ -6,6 +6,14 @@
 
 > **兼容性**：本 skill 在 [WorkBuddy](https://www.workbuddy.cn) 中创建并验证，但它只是一份标准的 `SKILL.md` + 参考文档 + 脚本，**任何支持 Agent Skill / 能用 MCP 工具的 AI Agent 理论上都可以加载使用**。
 
+## 注册福利（邀请链接）
+
+如果你未曾注册过以下 AI Agent，通过我的邀请链接注册可获得额外积分，可以直接点击跳转：
+
+- [WorkBuddy](https://www.workbuddy.cn/events/invite?inviteCode=i9ojz1rb2c)
+- [TRAE](https://www.trae.cn/events/code-fission/NMNMXE4QWUG7?utm_source=copy_link&utm_medium=code_fission)
+- [LobsterAI 有道龙虾](https://lobsterai.youdao.com/#/index?keyfrom=invitation) 邀请码：`hWPdpa`（登录时输入邀请码可额外获得 300 积分新人礼包）
+
 ## 做什么 / 不做什么
 
 只做浏览类任务，其余一律跳过：
