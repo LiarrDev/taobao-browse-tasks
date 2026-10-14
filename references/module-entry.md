@@ -51,6 +51,8 @@
 两个模块基本都是 Webview / 小程序容器，因此：
 
 - `mobile_list_elements_on_screen` 可能只返回少量元素甚至只有根节点；此时配合 `mobile_take_screenshot` 用坐标点击
+  - 但先分清：**「只返回根节点」多半是页面还没渲染完**，多等一轮再 list 通常就完整了。2026-10-14 复测，淘金币 H5 首页（Themis/TMS WebView 容器）的 dump 是完整的——`@e36 WebView text="淘金币首页"`、余额 `text="1137594"`、入口按钮 `text="赚更多金币" at=300,585 576x150` 都能直接读到，不需要截图。
+  - 真正需要截图的是**任务列表弹层内部滚动**（`fissionOverlayPortal`）那一种，见 `mobile-mcp-playbook.md` 的「dump 过期的确切边界」。
 - 加载期间的症状：白屏、只有标题栏、元素列表为空 → 等待 3 秒后重试，最多三轮
 - 容器内的返回箭头点不动时，改用 `mobile_press_button` BACK
 - 页面可能自动弹出「领取今日奖励」「开屏福利」浮层 → 找 X 关掉，**不要**点浮层中心的按钮（多半是「去下单」「去抢购」）

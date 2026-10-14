@@ -23,7 +23,10 @@ import sys
 from datetime import datetime
 
 VERDICTS = ["BROWSE", "GAME", "THIRD_PARTY", "OTHER", "DONE", "UNKNOWN"]
-RESULTS = ["完成", "跳过", "失败"]
+# "失败-未入账" is a distinct sub-kind of failure: the browse timer ran long
+# enough but the reward/progress never moved. It counts into 失败 in the report
+# (the counters below match on prefix) but stays visible in the detail table.
+RESULTS = ["完成", "跳过", "失败", "失败-未入账"]
 # Progress is tracked per logged round, e.g. "3/5"; the same task name may
 # appear many times, once per round, until it reaches N/N.
 
@@ -43,9 +46,9 @@ def load_tasks(tasks_log: str) -> list:
 
 
 def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = None) -> dict:
-    done = [t for t in tasks if t.get("result") == "完成"]
-    skipped = [t for t in tasks if t.get("result") == "跳过"]
-    failed = [t for t in tasks if t.get("result") == "失败"]
+    done = [t for t in tasks if str(t.get("result", "")).startswith("完成")]
+    skipped = [t for t in tasks if str(t.get("result", "")).startswith("跳过")]
+    failed = [t for t in tasks if str(t.get("result", "")).startswith("失败")]
     total_seconds = sum(int(t.get("seconds") or 0) for t in done)
 
     lines = []
@@ -57,10 +60,14 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
     lines.append(f"- 安全上限：最多 {meta.get('max_tasks')} 轮 / {meta.get('max_minutes')} 分钟\n")
     lines.append("## 汇总\n")
     lines.append(f"- 完成：{len(done)} 轮（累计浏览 {total_seconds} 秒）")
+    unrecorded = [t for t in failed if str(t.get("result", "")).startswith("失败-")]
     lines.append(f"- 跳过：{len(skipped)} 个")
     for v in ["GAME", "THIRD_PARTY", "OTHER", "DONE"]:
         lines.append(f"  - {v}：{len([t for t in skipped if t.get('verdict') == v])} 个")
-    lines.append(f"- 失败：{len(failed)} 个\n")
+    lines.append(f"- 失败：{len(failed)} 个")
+    if unrecorded:
+        lines.append(f"  - 其中「未入账」（停留够但进度/余额没动）：{len(unrecorded)} 个")
+    lines.append("")
 
     # Per-slot progress: a slot is one (module, task name) pair that may be
     # executed several rounds until its (n/N) counter is maxed out.
@@ -128,7 +135,9 @@ def main() -> int:
     parser.add_argument("--name", default="", help="Task title as shown on screen")
     parser.add_argument("--verdict", default="UNKNOWN", choices=VERDICTS)
     parser.add_argument("--result", default="跳过", choices=RESULTS)
-    parser.add_argument("--seconds", type=int, default=0, help="Actual browse duration")
+    parser.add_argument("--seconds", type=int, default=0,
+                        help="Wall-clock seconds actually stayed on the landing page "
+                             "(the measured now - t0, not the page's nominal target)")
     parser.add_argument(
         "--progress",
         default="",
