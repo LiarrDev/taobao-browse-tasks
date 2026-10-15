@@ -4,6 +4,8 @@
 
 说一句「刷淘宝任务」「做芭芭农场」「赚更多金币」即可触发。
 
+> ⏳ **临时活动模块**：另有一个「双十一直播体力」模块（deeplink 进活动页 →「赚步数」→ 只做逛直播间任务，进直播间等 7 秒返回），**只在你明确说「做直播任务」时才跑**，不会自动触发。活动结束后按 `references/temp-double11-live.md` 顶部的「移除清单」整份删除。
+
 > **兼容性**：本 skill 在 [WorkBuddy](https://www.workbuddy.cn) 中创建并验证，但它只是一份标准的 `SKILL.md` + 参考文档 + 脚本，**任何支持 Agent Skill / 能用 MCP 工具的 AI Agent 理论上都可以加载使用**。
 
 ## 做什么 / 不做什么
@@ -111,6 +113,7 @@ SKILL.md                          主流程（阶段 -1 ~ 阶段 4）
 references/task-classification.md 任务白/黑名单判定规则
 references/module-entry.md        两个模块的入口路径与 UI 锚点
 references/mobile-mcp-playbook.md mobile-mcp 工具清单与坐标换算
+references/temp-double11-live.md  临时活动「双十一直播体力」（手动触发，可整份删除）
 scripts/init_run.py               创建本次运行目录与日志骨架
 scripts/log_task.py               记录单条任务结果，--finish 生成报告
 scripts/diff_shots.py             比对两张截图，判定任务弹层是否已滚到底

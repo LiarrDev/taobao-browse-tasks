@@ -29,8 +29,11 @@ def main() -> int:
     parser.add_argument(
         "--module",
         default="both",
-        choices=["farm", "coins", "both"],
-        help="farm=芭芭农场, coins=淘金币, both=两个都跑 (default: both)",
+        # TEMP(双十一临时活动): "live" 是临时模块，活动下线后连同 SKILL.md 临时章节、
+        # references/temp-double11-live.md 与 README 里的临时说明一并删除。
+        choices=["farm", "coins", "both", "live"],
+        help="farm=芭芭农场, coins=淘金币, both=两个都跑 (default: both), "
+             "live=双十一直播体力(临时活动, 仅用户主动触发)",
     )
     parser.add_argument("--device", default="", help="Android device id reported by mobile_list_available_devices")
     parser.add_argument("--max-tasks", type=int, default=150, help="Safety cap on completed task rounds (default: 150)")
@@ -48,11 +51,16 @@ def main() -> int:
     shots_dir = os.path.join(run_dir, "shots")
     os.makedirs(shots_dir, exist_ok=True)
 
+    # TEMP(双十一临时活动): "live" 映射随临时模块一起删除即可。
+    module_names = {
+        "both": ["芭芭农场", "淘金币"],
+        "farm": ["芭芭农场"],
+        "coins": ["淘金币"],
+        "live": ["直播体力"],
+    }
     meta = {
         "started_at": started.isoformat(timespec="seconds"),
-        "modules": ["芭芭农场", "淘金币"] if args.module == "both" else (
-            ["芭芭农场"] if args.module == "farm" else ["淘金币"]
-        ),
+        "modules": module_names[args.module],
         "device": args.device,
         "max_tasks": args.max_tasks,
         "max_minutes": args.max_minutes,

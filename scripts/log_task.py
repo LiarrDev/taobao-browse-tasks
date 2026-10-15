@@ -131,7 +131,8 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
 def main() -> int:
     parser = argparse.ArgumentParser(description="Log one Taobao task outcome and refresh report.md.")
     parser.add_argument("--run-dir", required=True, help="Run directory created by init_run.py")
-    parser.add_argument("--module", default="", help="芭芭农场 / 淘金币")
+    # TEMP(双十一临时活动): 去掉 help 里的「直播体力」即可。
+    parser.add_argument("--module", default="", help="芭芭农场 / 淘金币 / 直播体力(临时活动)")
     parser.add_argument("--name", default="", help="Task title as shown on screen")
     parser.add_argument("--verdict", default="UNKNOWN", choices=VERDICTS)
     parser.add_argument("--result", default="跳过", choices=RESULTS)
