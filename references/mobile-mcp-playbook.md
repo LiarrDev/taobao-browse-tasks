@@ -20,7 +20,7 @@ mobile-mcp 的工具属于延迟加载工具：若当前工具列表中没有 `m
 | `mobile_batch_commands` | 一次往返里按顺序跑多个 `mobile_*` 步骤（`steps: [{name, arguments}]`，`listElementsAtEnd: true` 让它在末尾自动识屏）。**浏览保活的主要手段**：把 15~25 次不间断滑动塞进一个批次（见「滑动保活：必须连发」）。实测注意两点：① 滑动的**终点必须留在屏内**（`x=400, direction="left", distance=700` → 终点 -300，直接报 `finger 0 has negative coordinates`）；② `stopOnError: false` 时前面步骤失败**仍会返回末尾的识屏结果**，别把这种「有输出」当成成功；③ 批内各步的 `x/y/distance` 要彼此错开，别写成 20 条字节相同的步骤 |
 | `mobile_click_on_screen_at_coordinates` | 点击，`ref` 优先于 `x,y` |
 | `mobile_swipe_on_screen` | 滑动保活 |
-| `mobile_press_button` | HOME / BACK / ENTER 等 |
+| `mobile_press_button` | HOME / BACK / ENTER 等。**参数名是 `button`**（`{"button":"BACK","device":"<id>"}`）；写成 `key` 会被 schema 校验直接打回 |
 | `mobile_take_screenshot` | 看画面（不缓存） |
 | `mobile_save_screenshot` | 截图落盘到运行目录 |
 | `mobile_type_keys` | 输入搜索关键词 |
@@ -52,6 +52,27 @@ mobile-mcp 的工具属于延迟加载工具：若当前工具列表中没有 `m
 
 参考示例：屏幕 1176×2400 的设备，截图宽被缩到 1024 时，换算系数约 1176/1024 ≈ 1.148。
 
+## 读数字锚点：优先裁截图，别整屏 list
+
+弹层任务列表整屏 `mobile_list_elements_on_screen` 一次 300+ 行、token 很贵，而判断入账只需要两个数字（顶部金币余额、目标行的 `(n/N)`）。实测更省的做法：
+
+```bash
+adb -s <serial> exec-out screencap -p > shot.png
+python3 - <<'PY'
+from PIL import Image
+im = Image.open('shot.png')
+a = im.crop((0, 60, 760, 220))      # 顶部余额条（淘金币首页实测）
+b = im.crop((0, 620, 1176, 1300))   # 目标行所在区段
+b = b.resize((int(b.width*0.62), int(b.height*0.62)))
+c = Image.new('RGB', (max(a.width, b.width), a.height+b.height+10), 'white')
+c.paste(a, (0, 0)); c.paste(b, (0, a.height+10)); c.save('anchors.png')
+PY
+```
+
+把拼好的小图（约 760×590）交给模型读，一次调用就能同时拿到余额与 `(n/N)`。整屏 list 只在需要**新 ref 或精确坐标**时才发。
+
+⚠️ **不要用 `adb shell uiautomator dump` 省 token**：本机 LIO-AN00 实测返回空（mobile-mcp 的 uiautomator 通道占着），拿不到树。要文本就走 `mobile_list_elements_on_screen`，要省就走上面的截图裁剪。
+
 ## 滑动
 
 ```json
@@ -64,6 +85,8 @@ mobile-mcp 的工具属于延迟加载工具：若当前工具列表中没有 `m
 - **方向语义以实际效果为准**：第一次滑动后用 list 或截图核对内容是否朝预期方向移动，反了就改成相反方向
 
 ## 滑动保活：必须连发，停手就暂停
+
+> **适用范围：会场 / 店铺 / 搜索结果页 / 商品 feeds 这类多列滚动页。**「沉浸看」类整屏内容流**不适用**本节的连发滑动——它的计时**不靠滚动**，滑动对达标没有加成，反而会带来误触风险（这类页面底部就是商品卡与「立即购买 / 加入购物车」）。改走下面的「静置等待」。
 
 **这是本 skill 最重要的一条机制（淘金币实测 2026-10-14）。** 淘宝浏览任务的计时器是**滑动驱动**的：页面持续滚动时浏览时长才累计，**一旦停手 2~3 秒，计时器就暂停**。
 
@@ -96,7 +119,15 @@ sleep 3
 
 ### ⚠️ sleep 只用于「等页面加载」，不用于累计浏览时长
 
-`sleep` 的作用是让 H5 页面渲染出来、让弹层动画结束、让 BACK 之后页面稳定。**它不参与浏览计时**——淘宝那边看的是「有没有在滚」，不是「你停了多久」。常见错误是以为「停够 18 秒就算浏览 18 秒」，见上节。
+`sleep` 的作用是让 H5 页面渲染出来、让弹层动画结束、让 BACK 之后页面稳定。**它不参与浏览计时**——淘宝那边看的是「有没有在滚」，不是「你停了多久」。常见错误是以为「停够 18 秒就算浏览 18 秒」，见上节。（仅限本节说的普通滚动页；「沉浸看」类正相反，见下面的例外小节。）
+
+### 例外：沉浸看类用「一次静置 sleep」达标
+
+「好物沉浸看」这类整屏内容流页相反：**计时不依赖页面滚动，进页后原地待满提示秒数就达标**，所以不需要连发滑动（滑动也不加分，只会增加误触商品卡的风险）。做法是进页确认后**一次 Bash sleep 等满提示秒数 +3 秒余量（通常 18 秒）**，期间不发任何 `mobile_*` 调用（不滑、不点、不 list、不截图），醒来 `mobile_get_foreground_app` 校验还在淘宝，再按一次 BACK 回列表读数字锚点。
+
+```bash
+echo "immersive wait round 2"; sleep 18   # 多轮时数值取 18 / 15 / 17，避免连发相同命令被循环保护掐断
+```
 
 需要等待的场景：App 冷启动 4s，H5 页面加载 3s，弹窗动画 1s，BACK 后 2~3s。这些等待取不等长序列（如 `3 / 4 / 3.5`）并带递增 echo 标记。
 
