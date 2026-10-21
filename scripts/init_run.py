@@ -31,9 +31,12 @@ def main() -> int:
         default="both",
         # TEMP(双十一临时活动): "live" 是临时模块，活动下线后连同 SKILL.md 临时章节、
         # references/temp-double11-live.md 与 README 里的临时说明一并删除。
-        choices=["farm", "coins", "both", "live"],
+        # TEMP(双十一赛车临时活动): "race" 同样是临时模块，活动下线后连同 SKILL.md 的
+        # TEMP-DOUBLE11-RACE 标记块、references/temp-double11-race.md 一并删除。
+        choices=["farm", "coins", "both", "live", "race"],
         help="farm=芭芭农场, coins=淘金币, both=两个都跑 (default: both), "
-             "live=双十一直播体力(临时活动, 仅用户主动触发)",
+             "live=双十一直播体力(临时活动, 仅用户主动触发), "
+             "race=双十一赛车活动(临时活动, 仅用户主动触发)",
     )
     parser.add_argument("--device", default="", help="Android device id reported by mobile_list_available_devices")
     parser.add_argument("--max-tasks", type=int, default=150, help="Safety cap on completed task rounds (default: 150)")
@@ -52,11 +55,13 @@ def main() -> int:
     os.makedirs(shots_dir, exist_ok=True)
 
     # TEMP(双十一临时活动): "live" 映射随临时模块一起删除即可。
+    # TEMP(双十一赛车临时活动): "race" 映射同样随临时模块一起删除即可。
     module_names = {
         "both": ["芭芭农场", "淘金币"],
         "farm": ["芭芭农场"],
         "coins": ["淘金币"],
         "live": ["直播体力"],
+        "race": ["赛车活动"],
     }
     meta = {
         "started_at": started.isoformat(timespec="seconds"),
