@@ -1,8 +1,8 @@
 # taobao-browse-tasks
 
-一个 Agent Skill：通过 [mobile-mcp](https://github.com/mobile-next/mobile-mcp) 驱动一台已连接的手机，在淘宝 App 内自动完成「芭芭农场」和「淘金币」的**浏览类任务**（浏览 / 逛店 15~20 秒领奖励）。
+一个 Agent Skill：通过 [mobile-mcp](https://github.com/mobile-next/mobile-mcp) 驱动一台已连接的手机，在淘宝 App 内自动完成「芭芭农场」「淘金币」和「淘宝签到（红包签到·赚元宝）」的**浏览类任务**（浏览 / 逛店 15~30 秒领奖励）。
 
-说一句「刷淘宝任务」「做芭芭农场」「赚更多金币」即可触发。
+说一句「刷淘宝任务」「做芭芭农场」「赚更多金币」即可触发；签到模块说「做签到任务」「红包签到」「赚元宝」触发（默认运行不包含它）。
 
 > ⏳ **临时活动模块**：另有两个双十一临时模块，**都只在你明确点名时才跑**，不会自动触发。活动结束后按各自参考文档顶部的「移除清单」整份删除。
 >
@@ -19,8 +19,9 @@
 |---|---|
 | `BROWSE` 浏览 / 逛店 / 看会场 | ✅ 执行，停留「页面提示秒数 + 3」，不设上限 |
 | `GAME` 去玩 / 挑战 / 抽奖 / 合成 | ⏭ 跳过 |
-| `THIRD_PARTY` 蚂蚁庄园 / 头条 / 百度 / 淘宝特价版 | ⏭ 跳过 |
-| `OTHER` 下单 / 加购 / 关注 / 邀请 | ⏭ 跳过 |
+| `THIRD_PARTY` 蚂蚁庄园 / 支付宝 / 头条 / 百度 / 淘宝特价版 | ⏭ 跳过 |
+| 阅读 / 听书（浏览看书赚钱 / 有声小说） | ⏭ 跳过（用户明确要求） |
+| `OTHER` 下单 / 加购 / 关注 / 邀请 / 看直播 | ⏭ 跳过 |
 
 多轮任务（`搜一搜你心仪的宝贝(0/5)` 这类带 `n/N` 的）**要做满 N 轮**才换下一个，不是做一次就走。
 
@@ -114,7 +115,7 @@ iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与�
 ```
 SKILL.md                          主流程（阶段 -1 ~ 阶段 4）
 references/task-classification.md 任务白/黑名单判定规则
-references/module-entry.md        两个模块的入口路径与 UI 锚点
+references/module-entry.md        三个模块的入口路径与 UI 锚点
 references/mobile-mcp-playbook.md mobile-mcp 工具清单与坐标换算
 references/temp-double11-live.md  临时活动「双十一直播体力」（手动触发，可整份删除）
 references/temp-double11-race.md  临时活动「双十一赛车活动」（手动触发，可整份删除）

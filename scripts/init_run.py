@@ -33,10 +33,11 @@ def main() -> int:
         # references/temp-double11-live.md 与 README 里的临时说明一并删除。
         # TEMP(双十一赛车临时活动): "race" 同样是临时模块，活动下线后连同 SKILL.md 的
         # TEMP-DOUBLE11-RACE 标记块、references/temp-double11-race.md 一并删除。
-        choices=["farm", "coins", "both", "live", "race"],
+        choices=["farm", "coins", "both", "live", "race", "signin"],
         help="farm=芭芭农场, coins=淘金币, both=两个都跑 (default: both), "
              "live=双十一直播体力(临时活动, 仅用户主动触发), "
-             "race=双十一赛车活动(临时活动, 仅用户主动触发)",
+             "race=双十一赛车活动(临时活动, 仅用户主动触发), "
+             "signin=淘宝签到·红包签到赚元宝(仅用户主动触发)",
     )
     parser.add_argument("--device", default="", help="Android device id reported by mobile_list_available_devices")
     parser.add_argument("--max-tasks", type=int, default=150, help="Safety cap on completed task rounds (default: 150)")
@@ -62,6 +63,7 @@ def main() -> int:
         "coins": ["淘金币"],
         "live": ["直播体力"],
         "race": ["赛车活动"],
+        "signin": ["淘宝签到"],
     }
     meta = {
         "started_at": started.isoformat(timespec="seconds"),
