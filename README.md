@@ -135,6 +135,7 @@ scripts/diff_shots.py             比对两张截图，判定任务弹层是否�
 
 如果这个 skill 对你有用，下面是几个 AI Agent 的邀请链接。未曾注册过的话，通过链接注册可获得额外积分，可以直接点击跳转：
 
+- [WorkBuddy](https://www.workbuddy.cn/events/invite?inviteCode=i9ojz1rb2c)
 - [TRAE](https://www.trae.cn/events/code-fission/NMNMXE4QWUG7?utm_source=copy_link&utm_medium=code_fission)
 - [LobsterAI](https://lobsterai.youdao.com/#/index?keyfrom=invitation) 邀请码：`hWPdpa`（登录时输入邀请码可额外获得 300 积分新人礼包）
 
