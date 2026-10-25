@@ -1,20 +1,6 @@
-# 临时模块：小黑盒集钥匙（手动触发）
+# 模块：小黑盒集钥匙（手动触发）
 
-> ⏳ **这是临时活动模块**，只服务于当前的「小黑盒 / 集钥匙」活动，活动下线即失效。
->
 > ✅ **锚点已实测**（2026-10-25 建立，同日本机 LIO-AN00 / 1176×2400 首次跑通：3 轮 BROWSE / 0 失败，钥匙 15→18 分毫不差）。实测值、弹层机制与任务行判定见文末「首次运行实测记录」。
->
-> **移除清单**（活动结束后一次性做完，其余文件不用动）：
->
-> 1. 删除本文件 `references/temp-blackbox-keys.md`
-> 2. 删除 `SKILL.md` 中 `<!-- TEMP-BLACKBOX-BEGIN -->` ~ `<!-- TEMP-BLACKBOX-END -->` 之间的整段（共 4 处标记块：参数解析、铁律 11 下的补充句、临时模块章节、「资源」清单里的本文件条目）
-> 3. 删除 `SKILL.md` frontmatter `description` 里「小黑盒」那半句
-> 4. 删除 `references/module-entry.md` 中 `<!-- TEMP-BLACKBOX-BEGIN -->` ~ `<!-- TEMP-BLACKBOX-END -->` 之间的整段
-> 5. `scripts/init_run.py`：去掉 `choices` 里的 `"blackbox"`、模块名映射里的 `"blackbox"` 项（均带 `TEMP(小黑盒临时活动)` 注释）
-> 6. `scripts/log_task.py`：`--module` 的 help 去掉「小黑盒」（带 `TEMP(小黑盒临时活动)` 注释）
-> 7. `README.md`：去掉「临时活动模块」里小黑盒那一句与文件结构里的本文件条目
->
-> 本模块**不改动** `references/task-classification.md`（判定完全沿用主规则、不新增例外），因此那边无需清理。
 
 ---
 
@@ -46,13 +32,13 @@
 
 与 `SKILL.md` 阶段 -1 / 阶段 0 相同（确认 mobile-mcp → 选设备 → `mobile_get_screen_size` → 建运行目录 → 启动淘宝 → 关掉开屏/红包弹层）。
 
-运行目录带上临时模块名（本环境实际路径是 `.agents/skills/taobao-browse-tasks/`）：
+运行目录带上模块名（本环境实际路径是 `.agents/skills/taobao-browse-tasks/`）：
 
 ```bash
 python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module blackbox --max-tasks 80 --max-minutes 60
 ```
 
-建议上限：`max_tasks=80`、`max_minutes=60`（与主流程 / 其他临时模块对齐；`max_tasks` 纯兜底，别让它提前掐断），用户口头要求可覆盖。
+建议上限：`max_tasks=80`、`max_minutes=60`（与主流程 / 其他手动模块对齐；`max_tasks` 纯兜底，别让它提前掐断），用户口头要求可覆盖。
 
 ⚠️ **开跑前先防锁屏**（赛车模块 2026-10-22 实测教训：中途锁屏 `secure=true`，ADB 解不开只能等人工）：
 
@@ -88,7 +74,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 
 - `WebView text="开盒有喜-线上"`（活动名「天猫小黑盒 / 开盒有喜」，页面满是「恭喜XX抽中天猫小黑盒红包」滚动条与商品 feed）
 - 落地页左上「**我的钥匙 N**」：`TextView text="N" at≈54,501 size=69x60`（1176×2400）——**钥匙数字锚点①**
-- 白屏 / 元素少就再等一轮（时长错开 `3 / 4 / 3.5` 并带递增 echo 标记），最多三轮。活动已下线（提示活动结束、找不到「做任务集钥匙」入口）→ 汇报建议移除本模块，不要反复重进
+- 白屏 / 元素少就再等一轮（时长错开 `3 / 4 / 3.5` 并带递增 echo 标记），最多三轮。活动已下线（提示活动结束、找不到「做任务集钥匙」入口）→ 汇报即可，不要反复重进
 
 ⚠️ 本次 adb 直达**未出现** `net::ERR_THIRD_PARTY_NETWORK_205` 报错页（与直播模块不同）；若哪天出现，仍按「点一次刷新即好」处理，别判活动失效。
 
@@ -184,7 +170,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 - 列表滚动到底后仍无任何 `BROWSE`（所有槽位做满或转 DONE）
 - 完成任务数达 `max_tasks`（默认 80，纯兜底）
 - 用时达 `max_minutes`（默认 **60**，实际的主要刹车）
-- 设备离线 / 淘宝反复闪退 / **活动入口失效**（deeplink 打不开、落地页找不到「做任务集钥匙」、提示活动已结束 → 汇报「活动可能已下线，建议按顶部移除清单删掉本临时模块」）
+- 设备离线 / 淘宝反复闪退 / **活动入口失效**（deeplink 打不开、落地页找不到「做任务集钥匙」、提示活动已结束 → 汇报「活动入口可能已下线或失效」）
 
 收尾：按 HOME 退出，生成报告并作为交付物呈现：
 
@@ -215,7 +201,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 - **本模块不做滑动保活**（用户 2026-10-25 要求），触发滑块 / 人脸验证的概率很低；万一静置等待期间弹出验证弹窗 → 立即停手交人工，账号冷却 ≥ 30 分钟，绝不重试绕过。
 - **循环保护**：Bash `sleep` 用不等长序列 + 递增 echo 标记（如 `echo "bb-static-1"; sleep 15` / `echo "bb-static-2"; sleep 16`）。
 - **落地页与任务列表里的玩法按钮**（开盒、兑换、抽奖、攻略等）**全部不点**——那是活动本身，不是任务。
-- **活动有时限**：倒计时结束或入口消失即失效，不要反复重进，汇报并建议移除本模块。
+- **活动有时限**：倒计时结束或入口消失即失效，不要反复重进，汇报即可。
 
 ---
 
