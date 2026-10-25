@@ -11,7 +11,7 @@
 >
 > 「小黑盒集钥匙」（deeplink 进活动页 →「做任务集钥匙」→ 只做浏览类任务，落地静置 15 秒返回不滑动，判定沿用主规则）是常驻的手动模块，说「做小黑盒任务」「集钥匙」才跑，见 `references/blackbox-keys.md`（2026-10-25 已实测跑通）
 
-> **兼容性**：本 skill 在 [WorkBuddy](https://www.workbuddy.cn) 中创建并验证，但它只是一份标准的 `SKILL.md` + 参考文档 + 脚本，**任何支持 Agent Skill / 能用 MCP 工具的 AI Agent 理论上都可以加载使用**。
+> **兼容性**：本 skill 只是一份标准的 `SKILL.md` + 参考文档 + 脚本，**任何支持 Agent Skill / 能用 MCP 工具的 AI Agent 理论上都可以加载使用**。
 
 ## 做什么 / 不做什么
 
@@ -46,16 +46,18 @@
 放到你的 skill 目录即可：
 
 ```bash
-# 用户级（所有项目可用）
-git clone https://github.com/LiarrDev/taobao-browse-tasks.git ~/.workbuddy/skills/taobao-browse-tasks
+# 用户级（所有项目可用，以所用 Agent 的 skill 目录规范为准）
+git clone https://github.com/LiarrDev/taobao-browse-tasks.git ~/.agents/skills/taobao-browse-tasks
 
 # 或项目级
-git clone https://github.com/LiarrDev/taobao-browse-tasks.git .workbuddy/skills/taobao-browse-tasks
+git clone https://github.com/LiarrDev/taobao-browse-tasks.git .agents/skills/taobao-browse-tasks
 ```
+
+> 下文与各文档里的命令示例均以 `.agents/skills/taobao-browse-tasks/` 为准；装到别处时按实际目录调整。
 
 ### 依赖：mobile-mcp
 
-本 skill 完全依赖 mobile-mcp。首次使用若未安装，skill 会引导你写入 `~/.workbuddy/mcp.json`，但也可以自己先装好：
+本 skill 完全依赖 mobile-mcp。首次使用若未安装，skill 会引导你写进所用 Agent 的 MCP 配置文件（`mcpServers`），但也可以自己先装好：
 
 ```json
 {
@@ -133,7 +135,6 @@ scripts/diff_shots.py             比对两张截图，判定任务弹层是否�
 
 如果这个 skill 对你有用，下面是几个 AI Agent 的邀请链接。未曾注册过的话，通过链接注册可获得额外积分，可以直接点击跳转：
 
-- [WorkBuddy](https://www.workbuddy.cn/events/invite?inviteCode=i9ojz1rb2c)
 - [TRAE](https://www.trae.cn/events/code-fission/NMNMXE4QWUG7?utm_source=copy_link&utm_medium=code_fission)
 - [LobsterAI](https://lobsterai.youdao.com/#/index?keyfrom=invitation) 邀请码：`hWPdpa`（登录时输入邀请码可额外获得 300 积分新人礼包）
 

@@ -125,7 +125,7 @@ agent_created: true
 1. **探测**：用 ToolSearch 按名字加载 `mcp__mobile-mcp__mobile_list_available_devices`。
    - 能加载且调用成功 → 已安装，跳到阶段 0
    - 工具不存在 / 加载不到任何 `mobile_*` → 未安装，走下面第 2 步
-2. **安装**：合并进 MCP 配置文件 `~/.workbuddy/mcp.json`（**注意是 `mcp.json`，不是 `.mcp.json`**），加到 `mcpServers` 里，**不要覆盖已有的其他 server**。
+2. **安装**：合并进所用 Agent 的 MCP 配置文件（文件名与位置以所用 Agent 的规范为准，`mcp.json` / `.mcp.json` 或 GUI 设置均可），加到 `mcpServers` 里，**不要覆盖已有的其他 server**。
 3. **启用**：改完配置不会自动生效，需要用户在自定义连接器入口点「信任」新 server（或重启会话）；告知用户并等待其确认后再继续。
 4. **验证**：重新 ToolSearch + `mobile_list_available_devices`，返回设备列表即成功。
 
@@ -150,7 +150,7 @@ agent_created: true
 
 关键细节（踩过的坑）：
 
-- **`command` 用 npx 绝对路径**，不要写裸 `npx` —— 托管环境里 PATH 不一定带 node，裸命令会启动失败。可用 `<node-bin-dir>/npx` 指代（例如 `~/.workbuddy/binaries/node/versions/22.22.2-6/bin/npx`），实际路径以本机 `which npx` 为准。
+- **`command` 用 npx 绝对路径**，不要写裸 `npx` —— 托管环境里 PATH 不一定带 node，裸命令会启动失败。可用 `<node-bin-dir>/npx` 指代（例如 `/opt/homebrew/bin/npx` 或 `~/.nvm/versions/node/v22.22.2/bin/npx`），实际路径以本机 `which npx` 为准。
 - **`env.PATH` 必须显式带上 `platform-tools`**，否则 server 找不到 `adb`，设备列表恒为空且报错信息不明显。默认 Android SDK 位置 `~/Library/Android/sdk`。
 - **`MOBILEMCP_DISABLE_TELEMETRY=1`** 关闭匿名遥测，建议默认带上。
 
@@ -183,7 +183,7 @@ agent_created: true
 3. `mobile_get_screen_size` → 记录 W×H，后续滑动距离按 H 的比例换算。
 4. 初始化本次运行目录与日志：
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module both
+   python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module both
    ```
    脚本返回运行目录、截图目录与日志文件路径（默认落在当前工作区的 `.taobao-task-runs/<时间戳>/`），之后所有截图与记录都写到这里。
 5. `mobile_launch_app` 启动 `com.taobao.taobao`，等待约 4 秒让首屏渲染。
@@ -310,7 +310,7 @@ UI 锚点、文案与兜底路径详见 `references/module-entry.md`，摘要（
      - **验证拦截**：每 3 步检测一次滑块 / 人脸验证弹窗（关键词匹配 + 截图存证到 `<run>/shots/captcha_*.png`），命中立即硬停并**退出码 42**，把控制权交回人工，**绝不重试绕过**。
    - 调用示例（1176×2400 屏，**默认即随机 8~12 次滑动**，不传 `--swipes` 就会每轮随机取一个值；显式传 `--swipes` 则固定次数，便于长任务覆盖）：
      ```bash
-     python3 .workbuddy/skills/taobao-browse-tasks/scripts/keepalive_swipe.py \
+     python3 .agents/skills/taobao-browse-tasks/scripts/keepalive_swipe.py \
        --device <serial> --run-dir <run_dir> \
        --swipes-min 8 --swipes-max 12 --pause-min 1 --pause-max 3 \
        --x-min 360 --x-max 440 --y-min 1670 --y-max 1750 \
@@ -349,12 +349,12 @@ UI 锚点、文案与兜底路径详见 `references/module-entry.md`，摘要（
 9. 追加一行记录到本次运行日志（报告会自动重算，不需要手工维护汇总）。`--seconds` 填**这一轮从落地到返回列表的挂钟秒数**（如 47），并在 `--note` 里带上「连发 N 次滑动」（静置型轮写「静置 N 秒未滑动」）和入账证据数字（余额 x→y、进度 x/y），方便日后复盘这一轮到底有没有真到账。多轮任务**每做一轮就记一行**，用 `--progress` 带上当时的进度，报告里能看出做满过程：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 芭芭农场 --name "浏览某某会场 15 秒" \
      --verdict BROWSE --result 完成 --seconds 34 --note "随机N次滑动；余额1137594→1137614"
 
    # 多轮任务：每轮一条，progress 写当时读到的进度
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 淘金币 --name "搜一搜你心仪的宝贝" \
      --progress 3/5 --verdict BROWSE --result 完成 --seconds 41 --note "第3轮，连发18次滑动，进度推进至(3/5)"
    ```
@@ -362,7 +362,7 @@ UI 锚点、文案与兜底路径详见 `references/module-entry.md`，摘要（
    跳过的同样要记，方便复盘规则是否合理：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 淘金币 --name "去蚂蚁庄园喂鸡" \
      --verdict THIRD_PARTY --result 跳过 --note "需跳转第三方 App"
    ```
@@ -381,7 +381,7 @@ UI 锚点、文案与兜底路径详见 `references/module-entry.md`，摘要（
 收尾：按 HOME 退出，用 `--finish` 生成最终 report.md，并把它作为交付物呈现给用户：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
+python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
 ```
 
 汇报时要包含：完成 / 跳过（分类别）/ 失败的数量、总浏览时长、日志与截图目录。

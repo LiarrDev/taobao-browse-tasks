@@ -44,7 +44,7 @@
 运行目录带上临时模块名，方便与常规跑次区分：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module live --max-tasks 80 --max-minutes 60
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module live --max-tasks 80 --max-minutes 60
 ```
 
 建议上限：`max_tasks=80`、`max_minutes=60`（与主流程的 60 分钟对齐；`max_tasks` 纯兜底，别让它提前掐断），用户口头要求可覆盖。
@@ -172,7 +172,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 8. **每轮记一行日志**：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 直播体力 --name "逛直播间(0/3)" \
      --progress 1/3 --verdict BROWSE --result 完成 --seconds 12 \
      --note "直播间等待7秒；步数 1200→1250，进度推进至(1/3)"
@@ -181,7 +181,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
    跳过的同样要记，方便复盘白名单是否太严：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 直播体力 --name "预约 3 场直播" \
      --verdict OTHER --result 跳过 --note "预约/订阅类，非逛直播间"
    ```
@@ -198,7 +198,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 收尾：按 HOME 退出，生成报告并作为交付物呈现：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
+python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
 ```
 
 汇报格式沿用 `SKILL.md` 的「汇报格式」（模块列写「直播体力」），小结里额外说明：完成 N 轮、跳过 M 个（其中「非直播间类」多少）、失败 K 个、总耗时、目录；触发方式注明「用户主动触发」。

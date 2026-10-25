@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Initialize a run directory for one Taobao browse-task session.
 
-Sits inside the project-level skill at <workspace>/.workbuddy/skills/taobao-browse-tasks/
+Sits inside the project-level skill at <workspace>/.agents/skills/taobao-browse-tasks/
 and writes its output into <workspace>/.taobao-task-runs/ by default, keeping
 everything scoped to the current project.
 

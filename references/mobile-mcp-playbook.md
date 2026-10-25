@@ -173,7 +173,7 @@ sleep 6; echo "wait-c"
 到底判定交给脚本，不要让模型肉眼比图：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/diff_shots.py <run_dir>/shots/list_a.png <run_dir>/shots/list_b.png
+python3 .agents/skills/taobao-browse-tasks/scripts/diff_shots.py <run_dir>/shots/list_a.png <run_dir>/shots/list_b.png
 # {"same_screen": false, "score": 72.27, ...}   score ≥ 98 视为同一屏 = 已到底
 ```
 

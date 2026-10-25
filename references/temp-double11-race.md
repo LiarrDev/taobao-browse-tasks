@@ -81,7 +81,7 @@
 运行目录带上临时模块名：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module race --max-tasks 80 --max-minutes 60
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module race --max-tasks 80 --max-minutes 60
 ```
 
 建议上限：`max_tasks=80`、`max_minutes=60`（与主流程 / 直播模块对齐；`max_tasks` 纯兜底，别让它提前掐断），用户口头要求可覆盖。
@@ -187,7 +187,7 @@ python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module race 
 9. **每轮记一行日志**：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 赛车活动 --name "浏览某某会场 15 秒" \
      --progress 1/3 --verdict BROWSE --result 完成 --seconds 34 \
      --note "连发11次滑动；能量 1234→1284(+50)，进度 (0/3)→(1/3)"
@@ -196,7 +196,7 @@ python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module race 
    跳过的同样要记，方便复盘规则是否合理：
 
    ```bash
-   python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py \
+   python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
      --run-dir <run_dir> --module 赛车活动 --name "驾驶赛车前进 100 米" \
      --verdict OTHER --result 跳过 --note "赛车玩法本身（消耗能量），非浏览类"
    ```
@@ -213,7 +213,7 @@ python3 .workbuddy/skills/taobao-browse-tasks/scripts/init_run.py --module race 
 收尾：按 HOME 退出，生成报告并作为交付物呈现：
 
 ```bash
-python3 .workbuddy/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
+python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
 ```
 
 汇报格式沿用 `SKILL.md` 的「汇报格式」（模块列写「赛车活动」），小结里额外说明：完成 N 轮、跳过 M 个（其中「赛车玩法类」多少）、失败 K 个、总耗时、目录；触发方式注明「用户主动触发」。
