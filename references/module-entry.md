@@ -91,6 +91,19 @@
 
 <!-- TEMP-DOUBLE11-RACE-END -->
 
+<!-- TEMP-BLACKBOX-BEGIN -->
+## 小黑盒集钥匙（临时模块，仅用户主动触发）
+
+✅ **本模块锚点已实测**（2026-10-25 本机 1176×2400 首次跑通，3 轮 BROWSE 全入账）。完整流程、判定补充表与实测记录见 `temp-blackbox-keys.md`。
+
+**入口 = adb 唤起 deeplink → 点「做任务集钥匙」**：
+
+1. `adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn/h.jVRERsc" com.taobao.taobao` 强制淘宝接管（**不要用 `mobile_open_url`**——https 短链的默认 handler 是系统浏览器，唤不回淘宝，踩坑记录见 `temp-double11-live.md` L1）
+2. 落地校验：`TMSActivity` + `WebView text="开盒有喜-线上"`，页内左上有「我的钥匙 N」数字锚点；若报 `net::ERR_THIRD_PARTY_NETWORK_205`（2026-10-25 实测未出现）→ 点一次「刷新」即正常
+3. 落地页上点「**做任务集钥匙**」（无文本节点，中心 ≈ (789,550) 坐标点击）→ 拉起「做任务集开盒钥匙」任务弹层；落地页上其他玩法按钮（开盒 / 兑换 / 抽奖等）一律不点
+4. 只做浏览类任务，判定完全沿用 `task-classification.md`；「集钥匙 / 开黑盒」类玩法、下单、第三方跳转、游戏一律跳过；**所有落地页静置等 15 秒再 BACK，不滑动**
+<!-- TEMP-BLACKBOX-END -->
+
 ## 淘宝签到（红包签到 · 赚元宝）
 
 > 仅用户主动触发（「做签到任务 / 红包签到 / 赚元宝 / 淘宝签到」），默认运行（both）不含本模块。2026-10-22 本机（LIO-AN00，1176×2400）实测建立，含一轮静置型入账验证。

@@ -133,7 +133,8 @@ def main() -> int:
     parser.add_argument("--run-dir", required=True, help="Run directory created by init_run.py")
     # TEMP(双十一临时活动): 去掉 help 里的「直播体力」即可。
     # TEMP(双十一赛车临时活动): 去掉 help 里的「赛车活动」即可。
-    parser.add_argument("--module", default="", help="芭芭农场 / 淘金币 / 直播体力(临时活动) / 赛车活动(临时活动)")
+    # TEMP(小黑盒临时活动): 去掉 help 里的「小黑盒」即可。
+    parser.add_argument("--module", default="", help="芭芭农场 / 淘金币 / 直播体力(临时活动) / 赛车活动(临时活动) / 小黑盒(临时活动)")
     parser.add_argument("--name", default="", help="Task title as shown on screen")
     parser.add_argument("--verdict", default="UNKNOWN", choices=VERDICTS)
     parser.add_argument("--result", default="跳过", choices=RESULTS)
