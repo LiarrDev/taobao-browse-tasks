@@ -7,7 +7,7 @@
 > ⏳ **临时活动模块**：另有「双十一直播体力」「双十一赛车活动」两个临时活动模块，**都只在你明确点名时才跑**，不会自动触发，活动结束后按各自参考文档顶部的「移除清单」整份删除。
 >
 > - 「双十一直播体力」（deeplink 进活动页 →「赚步数」→ 只做逛直播间任务，进直播间等 7 秒返回）：说「做直播任务」才跑，见 `references/temp-double11-live.md`
-> - 「双十一赛车活动」（首页 → 领淘金币 →「赚能量」→ 只做浏览类任务，判定沿用主规则）：说「做赛车活动」才跑，见 `references/temp-double11-race.md`（**锚点尚未实测，首次运行后回填**）
+> - 「双十一赛车活动」（首页 → 领淘金币 →「赚能量」→ 只做浏览类任务，判定沿用主规则）：说「做赛车活动」才跑，见 `references/temp-double11-race.md`（已实测）
 >
 > 「小黑盒集钥匙」（deeplink 进活动页 →「做任务集钥匙」→ 只做浏览类任务，落地静置 15 秒返回不滑动，判定沿用主规则）是常驻的手动模块，说「做小黑盒任务」「集钥匙」才跑，见 `references/blackbox-keys.md`（2026-10-25 已实测跑通）
 
@@ -117,16 +117,18 @@ iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与�
 ## 文件结构
 
 ```
-SKILL.md                          主流程（阶段 -1 ~ 阶段 4）
-references/task-classification.md 任务白/黑名单判定规则
-references/module-entry.md        三个模块的入口路径与 UI 锚点
-references/mobile-mcp-playbook.md mobile-mcp 工具清单与坐标换算
-references/temp-double11-live.md  临时活动「双十一直播体力」（手动触发，可整份删除）
-references/temp-double11-race.md  临时活动「双十一赛车活动」（手动触发，可整份删除）
-references/blackbox-keys.md       模块「小黑盒集钥匙」（手动触发，默认运行不包含）
-scripts/init_run.py               创建本次运行目录与日志骨架
-scripts/log_task.py               记录单条任务结果，--finish 生成报告
-scripts/diff_shots.py             比对两张截图，判定任务弹层是否已滚到底
+SKILL.md                            主流程（阶段 -1 ~ 阶段 4）
+references/task-classification.md   任务白/黑名单判定规则
+references/module-entry.md          三个模块的入口路径与 UI 锚点
+references/mobile-mcp-playbook.md   mobile-mcp 工具清单与坐标换算
+references/blackbox-keys.md         模块「小黑盒集钥匙」（手动触发，默认运行不包含）
+references/temp-double11-live.md    临时活动「双十一直播体力」（手动触发，可整份删除）
+references/temp-double11-race.md    临时活动「双十一赛车活动」（手动触发，可整份删除）
+scripts/init_run.py                 创建本次运行目录与日志骨架
+scripts/log_task.py                 记录单条任务结果，--finish 生成报告
+scripts/keepalive_swipe.py          浏览保活随机化滑动 + 验证弹窗拦截（退出码 42）
+scripts/diff_shots.py               比对两张截图，判定任务弹层是否已滚到底
+scripts/race_probe.py               赛车弹层截图扫按钮列读数（临时活动专用，可整份删除）
 ```
 
 每次运行会在工作区 `.taobao-task-runs/<时间戳>/` 下产出截图与 `report.md`。
