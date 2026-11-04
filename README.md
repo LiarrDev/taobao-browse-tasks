@@ -39,6 +39,8 @@
 2. 交给大模型读屏、判断当前页面类型、决定下一步点哪里
 3. 再调用 mobile-mcp（或其他工具）执行点击 / 滑动 / 返回，然后重新识屏验证
 
+**手势按人滑。** 所有滑动都由 `scripts/keepalive_swipe.py` 注入：三次贝塞尔弧线、起终点抖动、首尾慢中间快的变速、不规则停顿——固定坐标 + 直线 + 匀速的 `input swipe` 是最容易被风控聚类的轨迹。
+
 > ⚠️ **因为每一步都要走一遍「识屏 + 大模型推理 + 调用工具」，整体耗时比你自己在手机上手动做任务要长很多。** 单个浏览任务实测约 32~35 秒（落地确认 4s + 挂钟停留 18~23s + 返回与到达校验 8s），其中真正有效的浏览时长只占三分之二左右，其余都花在识屏与推理上。追求效率的话，手刷更快；这个 skill 的价值在于**你不用盯着屏幕**。截图只在三种情况才拍：弹层滚动到底比对、坐标点击后验落点、失败留证。
 
 ## 安装
@@ -103,7 +105,7 @@ iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与�
 |---|---|---|
 | 识屏（元素列表） | `adb exec-out uiautomator dump /dev/tty`，解析 XML 取 text / content-desc / hint / resource-id / bounds | USB 调试 |
 | 截图 | `adb exec-out screencap -p` | USB 调试 |
-| 点击 / 滑动 | `input tap` / `input swipe` | USB 调试 |
+| 点击 / 滑动 | `input tap` / `input motionevent`（弧线手势，由脚本封装） | USB 调试 |
 | 返回 / 按键 | `input keyevent` | USB 调试 |
 | 启动 App | `am start` / `am force-stop` | USB 调试 |
 | iOS 识屏 | WebDriverAgent（XCTest）的 `/source?format=json` | WDA + 端口转发 |
@@ -126,7 +128,7 @@ references/temp-double11-live.md    临时活动「双十一直播体力」（�
 references/temp-double11-race.md    临时活动「双十一赛车活动」（手动触发，可整份删除）
 scripts/init_run.py                 创建本次运行目录与日志骨架
 scripts/log_task.py                 记录单条任务结果，--finish 生成报告
-scripts/keepalive_swipe.py          浏览保活随机化滑动 + 验证弹窗拦截（退出码 42）
+scripts/keepalive_swipe.py          拟人化滑动（贝塞尔弧线 + 变速 + 抖动）+ 验证弹窗拦截（退出码 42）
 scripts/diff_shots.py               比对两张截图，判定任务弹层是否已滚到底
 scripts/race_probe.py               赛车弹层截图扫按钮列读数（临时活动专用，可整份删除）
 ```

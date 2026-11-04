@@ -14,7 +14,7 @@
 | `mobile_list_elements_on_screen` | 取 ref / 坐标 / 文案。必传 `device`；默认 `format: "text"`（每行含 ref+坐标+文案，token 约为 `json` 一半） |
 | `mobile_batch_commands` | 一次往返跑多个 `mobile_*` 步骤（`steps: [{name, arguments}]`，`listElementsAtEnd: true` 末尾自动识屏） |
 | `mobile_click_on_screen_at_coordinates` | 点击，`ref` 优先于 `x,y` |
-| `mobile_swipe_on_screen` | 滑动 |
+| `mobile_swipe_on_screen` | 滑动（直线匀速，**任务期不用**，见下节） |
 | `mobile_press_button` | HOME / BACK / ENTER。**参数名是 `button`**（写成 `key` 会被 schema 打回） |
 | `mobile_take_screenshot` / `mobile_save_screenshot` | 看画面（不缓存）/ 落盘 |
 | `mobile_type_keys` | 输入关键词（仅 ASCII） |
@@ -30,6 +30,7 @@
 1. 元素在 list 里 → 用 `ref`。
 2. 只在截图上可见（图片型按钮、Webview 自绘控件）→ 截图后换算坐标点 `x,y`。
 3. 点了没反应 → 重新 list 拿新 ref，**不要用同一坐标反复戳**。
+4. 用坐标点击时，在元素框内随机偏 4~10px，别每次命中同一像素（跟滑动同理，固定点也是低熵特征）。用 ref 点击时落点由框架决定，不用管。
 
 ## 坐标换算
 
@@ -57,40 +58,73 @@ PY
 - ⚠️ **不要用 `adb shell uiautomator dump` 省 token**：本机实测返回空（mobile-mcp 的 uiautomator 通道占着），拿不到树。要文本走 `mobile_list_elements_on_screen`，要省走截图裁剪。
 - ⚠️ **连带后果：`keepalive_swipe.py` 的验证拦截在本机静默失效**。`detect_captcha()` 靠 `uiautomator dump` 做关键词匹配，该命令在本机直接被 `Killed`（exit 137）→ dump 恒空 → 滑块/人脸**不会被检出**，脚本照样打印 `{"status":"OK"}`。**不要把这个 OK 当成「没触发风控」**：每 2~3 轮补一张 `adb exec-out screencap` 裁图看一眼有没有验证弹窗。
 
-## 滑动
+## 滑动：一律走拟人化轨迹脚本
 
-```json
-{ "device": "<id>", "direction": "up", "x": 588, "y": 1700, "distance": 360 }
+淘宝的风控看行为熵：固定坐标 + 固定直线 + 固定时长的 `input swipe` 是最容易被聚类的轨迹。所以**任务期的所有滑动都用 `scripts/keepalive_swipe.py`**，它每次给出的轨迹都不一样：
+
+- **贝塞尔弧线**：三次贝塞尔取点，两个控制点沿法向随机偏离（幅度为行程的 6%~15%），约 1/4 的滑动走 S 形；
+- **起终点抖动**：起点再叠 ±8px、终点再叠 ±16~26px，落点不会每轮撞在同一像素；
+- **多段变速**：位置按 ease-in-out 采样（首尾慢、中间快），每段时长再叠 ±13% 抖动，偶发一次中途停顿；另有 12% 短促快滑 / 12% 长距慢拖的风格切换；
+- **连贯手势**：DOWN → 10~14 次 MOVE → UP 在同一次 adb shell 里注入（`input motionevent`），系统认作一条连续手势。`input swipe` 只能直线匀速，只在设备不支持 motionevent 时自动降级（输出里 `method=swipe`）。
+
+| 参数 | 含义 | 默认（1176×2400） |
+|---|---|---|
+| `--x-min/--x-max`、`--y-min/--y-max` | 起滑点区间，中下部偏左 | 360~440 / 1670~1750 |
+| `--dist-min/--dist-max` | 单次行程（px） | 260~330 |
+| `--duration-min/--duration-max` | 单次目标时长（ms） | 520~780 |
+| `--segments-min/--segments-max` | 贝塞尔采样段数 | 10~14 |
+| `--swipes` / `--swipes-min/--swipes-max` | 本次滑几次 | 8~12 |
+| `--pause-min/--pause-max` | 滑动间停顿（秒），脚本会再随机拉长/缩短 | 1~3 |
+| `--method` | `auto` / `motionevent` / `swipe` | auto |
+
+单次滑动（列表下滑、唤醒页面）用 `--swipes 1`：
+
+```bash
+python3 .agents/skills/taobao-browse-tasks/scripts/keepalive_swipe.py \
+  --device <serial> --run-dir <run_dir> --swipes 1 \
+  --y-min 1500 --y-max 1600 --dist-min 780 --dist-max 820 \
+  --duration-min 750 --duration-max 950
 ```
 
-- `direction`：`up` / `down` / `left` / `right`；**方向语义以实际效果为准**，第一次滑完核对内容是否朝预期方向移动，反了就改。
-- `distance`：不传默认屏高的 30%（2400 高的屏约 720px，通常过长，一次滑过头后面几次就空滑）。**连发保活取 268~326**（≈ H×0.11~0.14）。
-- `x, y`：起点，默认屏幕中心。**保活起点取中下部偏左**（1176×2400 实测 `x` 364~440、`y` 1674~1748）——右下角常是悬浮球（五棱镜 / 淘金币类会场），从右下起滑容易误触跳走。
+- 起点偏左（`x ≈ W×0.34`）：右下角常是悬浮球（五棱镜 / 淘金币类会场），从右下起滑容易误触跳走。
+- 弹层 / 长列表**推不动**：加大行程（700~900）并放慢（750~1000ms）。慢速长行程才推得动，短行程快滑在农场弹层上实测纹丝不动。
+- 双列网格**别用长行程**：200~260px，否则惯性会跳过好几屏。
+- 每段 MOVE 都是一次设备端 `input` 调用（本机实测约 40ms），单次滑动实际耗时 0.5~1 秒。这是设备粒度上限，`--duration-*` 再往下压也只会被开销抹平成匀速。
+- `--dry-run` 只打印计划出来的手势脚本、不注入任何事件，调参时用。
+- 想亲眼看轨迹：`adb shell settings put system pointer_location 1` 打开系统「指针位置」浮层，滑完截图能看到蓝色轨迹和 `dY`，调完记得改回 `0`。
+- `mobile_swipe_on_screen` 是直线匀速，**不要拿它做任务期滑动**（它只适合不讲究轨迹的场合，比如挪一下调试页面）。
 
-## 连发保活：必须连发，停手就暂停
+## 连发保活：必须连续滚，停手就暂停
 
 **本 skill 最重要的机制。** 淘宝浏览任务的计时器是**滑动驱动**的：页面持续滚动才累计，**停手 2~3 秒计时器就暂停**。
 
-> ⚠️ **例外：双列商品卡网格**（feeds / 双列搜索结果）不走连发。正确动作是**滑 1 次 → 点一张普通商品卡 → 详情页静置 15 秒 → BACK**。网格里连发下滚又慢又容易误触卡片，细节见 `SKILL.md`「双列 feeds 浏览任务」。
+> ⚠️ **例外 1：双列商品卡网格**（feeds / 双列搜索结果）不走连发。正确动作是**滑 1 次 → 点一张普通商品卡 → 详情页静置 15 秒 → BACK**。网格里连发下滚又慢又容易误触卡片，细节见 `SKILL.md`「双列 feeds 浏览任务」。
+>
+> ⚠️ **例外 2：静置型**（沉浸看 / 看严选推荐商品）：计时不靠滚动，进页什么都不做。
 
 - 错误写法：「滑一下 → `sleep 5` → list 一下 → 再滑一下」。挂钟确实过了 20 多秒，但页面大部分时间静止，真正计入的只有滑动的两三秒 → 表现为「任务卡住、`(n/N)` 不动、余额不涨」，且没有任何报错，很容易误判成白屏或设备故障。
-- 正确做法：**一轮 = 一次 `mobile_batch_commands`，steps 里连发 12~17 次 `mobile_swipe_on_screen`，中间不插 sleep / list / 截图**（插任何一步都是停手）。同批连发后每轮都真入账；稀疏滑动版多轮颗粒无收。
+- 正确做法：**一轮 = 一次 `keepalive_swipe.py` 调用**。脚本在一次 adb shell 里注入 8~12 条拟人化弧线手势，自带 1~3 秒不规则停顿，中间不插 list / 截图。
 
-```json
-{"device":"<id>","stopOnError":false,"listElementsAtEnd":true,"steps":[
-  {"name":"mobile_save_screenshot","arguments":{"device":"<id>","maxSize":720,"saveTo":"<run_dir>/shots/07_land.png"}},
-  {"name":"mobile_swipe_on_screen","arguments":{"device":"<id>","direction":"up","x":400,"y":1700,"distance":300}},
-  {"name":"mobile_swipe_on_screen","arguments":{"device":"<id>","direction":"up","x":364,"y":1748,"distance":268}},
-  {"name":"mobile_swipe_on_screen","arguments":{"device":"<id>","direction":"up","x":440,"y":1674,"distance":326}},
-  {"name":"mobile_save_screenshot","arguments":{"device":"<id>","maxSize":720,"saveTo":"<run_dir>/shots/07_after.png"}}
-]}
+```bash
+python3 .agents/skills/taobao-browse-tasks/scripts/keepalive_swipe.py \
+  --device <serial> --run-dir <run_dir> \
+  --swipes-min 8 --swipes-max 12 --pause-min 1 --pause-max 3 \
+  --x-min 360 --x-max 440 --y-min 1670 --y-max 1750 \
+  --dist-min 260 --dist-max 330 --check-every 3
 ```
 
-- steps 补到 12~17 条，`x` / `y` / `distance` 在上面的区间内彼此错开。
-- 经验换算：**15~20 次不间断滑动 ≈ 20~45 秒有效浏览**，覆盖「浏览 5 秒 / 15 秒 / 逛 20 秒」各档。**达标与否由数字锚点说了算，不由滑次数或挂钟说了算。**
-- 批次后锚点显示「还差一点」→ 在**同一落地页**再发一个同规模批次补滑（补滑有效，不用重进），最多两批。
-- `stopOnError: false` 时前面步骤失败**仍会返回末尾识屏**，别把这种「有输出」当成成功。
-- 批内各步的 `x/y/distance` 要彼此错开，别写成 20 条字节相同的步骤。
+- **不要**用 `mobile_batch_commands` 连发 `mobile_swipe_on_screen`：那是固定坐标 + 直线 + 匀速的轨迹，正是风控最容易聚类的形态。脚本单进程调用同样只有一次工具调用，不会触发宿主对「连续相同调用」的循环保护。
+- 经验换算：8~12 次滑动 + 停顿 ≈ 20~45 秒有效浏览，覆盖「浏览 5 秒 / 15 秒 / 逛 20 秒」各档。**达标与否由数字锚点说了算，不由滑次数或挂钟说了算。**
+- 批次后锚点显示「还差一点」→ 在**同一落地页**再发一轮补滑（补滑有效，不用重进），最多两轮。
+- 每轮结束查一次 `mobile_get_foreground_app`，不要每滑一次就查（会打断连续滚动）。
+
+### 转场期与惯性期的时序坑（实测）
+
+- **「点去完成 → 立刻 swipe」必失败**：页面转场中 adb 会拒绝 `ACTION_UP`（报 `device refused MotionEvent`）。点击进任务后先 `sleep 3~4`，再单独发滑动，别把「点击入口」和「第一批滑动」塞进同一个 batch。
+- **惯性滚动未停时点击会被吞**：滑完立刻点商品卡，`mResumedActivity` 仍是原页面（点击无响应）。滑完 `sleep 1` 再点，或点完发现没跳转就补一次同样的点击。
+- **双列 feeds 重进会重置滚动位置**：每次从弹层点「去完成」重新进落地页，内容回到顶部，卡位坐标要重新看，别复用上一轮的点击点。
+- **验证页的廉价识别**（`uiautomator dump` 不可用时的替代）：`adb shell dumpsys activity activities | grep mResumedActivity`，出现 `com.alibaba.wireless.security.open.middletier.fc.ui.Ext2ContainerActivity` + 截图见「请拖动下方滑块完成验证」= 滑块验证，按铁律 12 立即停手。
+- **登录页/风控前兆的识别**：`screencap` 输出 **0 字节** = 当前页带 FLAG_SECURE；配合 `mResumedActivity` 见 `com.ali.user.mobile.login.ui.UserLoginActivity` 即账号已被踢下线，立即停止本模块并交人工登录。经验顺序是先弹层显示「目前做任务的人数较多 晚点再来喔」空态，再跳登录页——看到那句空态就当风控信号，别反复重进。
 
 ## 等待
 
