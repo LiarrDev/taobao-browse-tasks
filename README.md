@@ -129,6 +129,7 @@ references/temp-double11-race.md    临时活动「双十一赛车活动」（�
 scripts/init_run.py                 创建本次运行目录与日志骨架
 scripts/log_task.py                 记录单条任务结果，--finish 生成报告
 scripts/keepalive_swipe.py          拟人化滑动（贝塞尔弧线 + 变速 + 抖动）+ 验证弹窗拦截（退出码 42）
+scripts/browse_round.py             单轮执行器：点已确认的浏览行 → 按落地形态分流（含搜索页自动点词）→ 回弹层
 scripts/diff_shots.py               比对两张截图，判定任务弹层是否已滚到底
 scripts/race_probe.py               赛车弹层截图扫按钮列读数（临时活动专用，可整份删除）
 ```

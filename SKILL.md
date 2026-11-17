@@ -167,6 +167,11 @@ agent_created: true
 
 ### 阶段 3：执行单个浏览任务
 
+> 🔁 **要重复做的槽位交给 `scripts/browse_round.py`。** 你确认某行是 BROWSE 之后，把它的按钮中心 y 交给脚本，它自己跑完「点击 → 按 `mCurrentFocus` + 白屏率分流 → 静置 / 连发 / 搜索页点词→点商品卡 → 逐次 BACK 判落点回弹层 → 留对账拼图」，异常立刻停并打印状态（`NO_JUMP` / `SEARCH` / `VENUE` / `STATIC` / `IRP` / `CAPTCHA` / `LEFT_APP` / `UNKNOWN`）。
+> - `--rounds 12,13,14` 一次跑多轮，`--rest` 控轮间休息（铁律 13）。
+> - 它**不判断这一行是什么任务**：第三方/玩法行被点中会直接跳走，所以 y 必须由你先看图（`race_probe.py` / list）确认；弹层每轮重排，跨轮不能沿用旧 y。
+> - 只点一次、ref 可靠、或脚本报 `UNKNOWN` 时，照下面的手工步骤走。
+
 1. **点击**：优先用该行按钮的 `ref`；ref 不可靠或弹层树过期时用中心坐标。**坐标点击后必须 list 校验落点**，落错 BACK 重来。
 2. **按落地页形态分流**（每次进页重判，不沿用上一轮）：
 
@@ -335,4 +340,5 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 - `scripts/init_run.py` — 建运行目录与日志骨架
 - `scripts/log_task.py` — 追加任务结果并重算 report.md；`--finish` 收尾
 - `scripts/keepalive_swipe.py` — 拟人化滑动（贝塞尔弧线 + 起终点抖动 + 变速），任务期所有滑动都走它；含验证拦截（退出码 42），见阶段 3 第 4 步
+- `scripts/browse_round.py` — 单轮执行器：点已确认的 BROWSE 行 → 按落地形态分流（含搜索中间页自动点推荐词→点商品卡）→ 逐次 BACK 回弹层 → 留对账拼图；`--rounds` 可连续跑多轮
 - `scripts/diff_shots.py` — 两张截图相似度，弹层到底判定的辅助信号
