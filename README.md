@@ -126,7 +126,8 @@ references/mobile-mcp-playbook.md   mobile-mcp 工具清单与坐标换算
 references/blackbox-keys.md         模块「小黑盒集钥匙」（手动触发，默认运行不包含）
 references/temp-double11-live.md    临时活动「双十一直播体力」（手动触发，可整份删除）
 references/temp-double11-race.md    临时活动「双十一赛车活动」（手动触发，可整份删除）
-scripts/init_run.py                 创建本次运行目录与日志骨架
+scripts/init_run.py                 创建本次运行目录与日志骨架（建之前自动清理 7 天前的旧目录）
+scripts/prune_runs.py               单独清理运行目录：默认干跑，--apply 真删
 scripts/log_task.py                 记录单条任务结果，--finish 生成报告
 scripts/keepalive_swipe.py          拟人化滑动（贝塞尔弧线 + 变速 + 抖动）+ 验证弹窗拦截（退出码 42）
 scripts/browse_round.py             单轮执行器：点已确认的浏览行 → 按落地形态分流（含搜索页自动点词）→ 回弹层
@@ -135,6 +136,17 @@ scripts/race_probe.py               赛车弹层截图扫按钮列读数（临�
 ```
 
 每次运行会在工作区 `.taobao-task-runs/<时间戳>/` 下产出截图与 `report.md`。
+
+截图很占地方，几周就能堆到几个 GB，所以 **`init_run.py` 每次建新目录前会自动删掉 `.taobao-task-runs/` 下超过 7 天的运行目录**。想保留旧日志加 `--no-prune`，改保留期用 `--keep-days N`；也可以单独清理：
+
+```bash
+# 先看会删什么（默认干跑）
+python3 .agents/skills/taobao-browse-tasks/scripts/prune_runs.py
+# 确认后真删，并只保留最近 3 天
+python3 .agents/skills/taobao-browse-tasks/scripts/prune_runs.py --keep-days 3 --apply
+```
+
+删除范围只限「名字像一次运行（含 `YYYYMMDD` 日期）且目录内确实有 `report.md` / `shots` / `meta.json` 等产物」的**直接子目录**；符号链接、普通文件、其它目录一概不碰，根目录是 `/` 或用户 home 时直接拒绝执行。
 
 ## 注册福利（邀请链接）
 
