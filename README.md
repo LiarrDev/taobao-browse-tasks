@@ -155,6 +155,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/prune_runs.py --keep-days 3 -
 - [WorkBuddy](https://www.workbuddy.cn/events/invite?inviteCode=i9ojz1rb2c)
 - [TRAE](https://www.trae.cn/events/code-fission/NMNMXE4QWUG7?utm_source=copy_link&utm_medium=code_fission)
 - [LobsterAI](https://lobsterai.youdao.com/#/index?keyfrom=invitation) 邀请码：`hWPdpa`（登录时输入邀请码可额外获得 300 积分新人礼包）
+- [Qoder](https://qoder.com/activities?referral_code=XpEnCSJ1wQHLMXIozdPlzLSYmHSWUb1c)
 
 ## 注意
 
