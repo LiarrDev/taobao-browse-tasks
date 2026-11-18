@@ -128,7 +128,7 @@ agent_created: true
 2. `mobile_list_available_devices` → 选 `platform=android` 且 `type=real` 的设备：仅一台直接用并报出设备名；多台停下来问用户；**没有本地设备不要静默申请远程**（计费），先询问。
 3. `mobile_get_screen_size` → 记 W×H，后续滑动距离按 H 比例换算。
 4. `python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module <both|farm|coins|signin|blackbox|live|race>` → 拿到运行目录与日志路径（默认 `.taobao-task-runs/<时间戳>/`），之后所有截图与记录都写这里。
-   - **建目录前会自动清掉 `.taobao-task-runs/` 下超过 7 天的运行目录**（截图很占地方，几周能堆到几个 GB）。想留旧日志加 `--no-prune`，改保留期用 `--keep-days N`；也可单独跑 `scripts/prune_runs.py`（默认干跑只报告，`--apply` 才删）。
+   - **建目录前会自动清掉 `.taobao-task-runs/` 下超过 3 天的运行目录**（截图很占地方，几周能堆到几个 GB）。想留旧日志加 `--no-prune`，改保留期用 `--keep-days N`；也可单独跑 `scripts/prune_runs.py`（默认干跑只报告，`--apply` 才删）。
    - 清理范围只限「名字像一次运行、且内含 `report.md` / `shots` / `meta.json` 等产物」的**直接子目录**，符号链接与其它文件一律不碰；根目录是 `/` 或用户 home 时直接拒绝执行。
    - 输出的 JSON 带 `prune` 字段（`removed` / `kept` / `freed_bytes`）。有清理时在汇报里带一句「清掉 N 个旧目录，释放 X MB」即可。
 5. `mobile_launch_app` 启动 `com.taobao.taobao`，等约 4 秒。
@@ -328,7 +328,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 | 双列 feeds 连发下滚后仍不入账 | 停掉连发，改成点一张普通商品卡、详情静置 15 秒再返回 |
 | 双列 feeds 点到的卡是广告 / 直播 | 立即 BACK 回 feeds 换一张普通商品卡，本轮不计入 `(n/N)` |
 | 多轮槽位做满后该行变成下单任务 | 自然收敛，不是失败 |
-| `.taobao-task-runs` 占了几 GB | 截图堆积，正常。`init_run.py` 每轮已自动清 7 天前的目录；要立刻瘦身就跑 `scripts/prune_runs.py --apply`，想留更久用 `--keep-days 14` |
+| `.taobao-task-runs` 占了几 GB | 截图堆积，正常。`init_run.py` 每轮已自动清 3 天前的目录；要立刻瘦身就跑 `scripts/prune_runs.py --apply`，想留更久用 `--keep-days 14` |
 
 ## 资源
 
@@ -341,7 +341,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 - `scripts/race_probe.py` — 赛车弹层截图扫按钮列读数（弹层 dump 冻结时用）
 <!-- TEMP-DOUBLE11-RACE-END -->
 - `references/temp-double11-live.md` — 临时活动「双十一直播体力」全流程（手动触发，下线后整份删除）
-- `scripts/init_run.py` — 建运行目录与日志骨架；建之前自动清理 7 天前的旧运行目录（`--no-prune` 关闭、`--keep-days` 调保留期）
+- `scripts/init_run.py` — 建运行目录与日志骨架；建之前自动清理 3 天前的旧运行目录（`--no-prune` 关闭、`--keep-days` 调保留期）
 - `scripts/prune_runs.py` — 单独清理运行目录：默认干跑只报告，`--apply` 真删；只删名字像运行目录且有产物的直接子目录
 - `scripts/log_task.py` — 追加任务结果并重算 report.md；`--finish` 收尾
 - `scripts/keepalive_swipe.py` — 拟人化滑动（贝塞尔弧线 + 起终点抖动 + 变速），任务期所有滑动都走它；含验证拦截（退出码 42），见阶段 3 第 4 步

@@ -10,7 +10,7 @@
 用法：
     python3 scripts/prune_runs.py                     # 只报告，不删（默认干跑）
     python3 scripts/prune_runs.py --apply             # 真删
-    python3 scripts/prune_runs.py --keep-days 3       # 改保留期（默认 7 天）
+    python3 scripts/prune_runs.py --keep-days 7       # 改保留期（默认 3 天）
     python3 scripts/prune_runs.py --dir /abs/path --apply
 
 输出一个 JSON：{"root", "keep_days", "applied", "removed": [...], "kept",
@@ -29,7 +29,7 @@ import sys
 from datetime import datetime, timedelta
 
 DEFAULT_ROOT = ".taobao-task-runs"  # relative to the current working directory
-DEFAULT_KEEP_DAYS = 7
+DEFAULT_KEEP_DAYS = 3
 
 # 允许 init_run.py 的标准命名 20261117-103145，以及手工建过的变体：
 # 20261113-1532（时:分）/ 20261113-1621-signin / signin-20261102
