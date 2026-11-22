@@ -117,6 +117,10 @@
 
 入口是 deeplink，不走金刚区：`adb shell am start -a android.intent.action.VIEW -d "https://m.tb.cn/h.jVRERsc" com.taobao.taobao` → 落地 `WebView text="开盒有喜-线上"` → 点「做任务集钥匙」（无文本节点，中心 ≈ (789,550)）拉起任务弹层。完整流程见 `blackbox-keys.md`。
 
+## 淘宝福利购
+
+入口是 deeplink，不走金刚区：`adb shell am start -a android.intent.action.VIEW -d "https://m.tb.cn/h.jmGPoVQ" com.taobao.taobao` → 落地 `WebView text="淘宝福利购"`。进页可能直接自动弹出任务抽屉（标题「做任务攒能量领红包」），也可能先出「福利红包 → 立即收下 → 做任务攒能量领红包 → 去浏览」两层弹窗（后者点完就地上滑 1 次 + 静置 15 秒）。抽屉没开就点「**做任务 赢能量**」（无文本节点，中心 ≈ (858,670)）拉起。完整流程与实测锚点见 `welfare-shop.md`。
+
 ## 找不到入口时的降级路径
 
 按序尝试，成功即停（入口来源记进首个任务的 `--note`，方便复盘首页直入命中率）：
