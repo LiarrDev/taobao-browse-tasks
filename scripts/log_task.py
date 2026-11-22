@@ -22,6 +22,11 @@ import os
 import sys
 from datetime import datetime
 
+try:
+    from screen_timeout import restore as restore_screen_timeout
+except ImportError:  # pragma: no cover - 缺文件时不恢复，但别挡住记录
+    restore_screen_timeout = None
+
 VERDICTS = ["BROWSE", "GAME", "THIRD_PARTY", "OTHER", "DONE", "UNKNOWN"]
 # "失败-未入账" is a distinct sub-kind of failure: the browse timer ran long
 # enough but the reward/progress never moved. It counts into 失败 in the report
@@ -45,7 +50,13 @@ def load_tasks(tasks_log: str) -> list:
     return tasks
 
 
-def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = None) -> dict:
+def write_report(
+    report_path: str,
+    meta: dict,
+    tasks: list,
+    finished_at: str = None,
+    screen_restore: dict = None,
+) -> dict:
     done = [t for t in tasks if str(t.get("result", "")).startswith("完成")]
     skipped = [t for t in tasks if str(t.get("result", "")).startswith("跳过")]
     failed = [t for t in tasks if str(t.get("result", "")).startswith("失败")]
@@ -57,7 +68,23 @@ def write_report(report_path: str, meta: dict, tasks: list, finished_at: str = N
     lines.append(f"- 结束时间：{finished_at or '（进行中）'}")
     lines.append(f"- 设备：{meta.get('device') or '（未指定）'}")
     lines.append(f"- 模块：{'、'.join(meta.get('modules', []))}")
-    lines.append(f"- 安全上限：最多 {meta.get('max_tasks')} 轮 / {meta.get('max_minutes')} 分钟\n")
+    lines.append(f"- 安全上限：最多 {meta.get('max_tasks')} 轮 / {meta.get('max_minutes')} 分钟")
+    original_ms = meta.get("screen_timeout_original_ms")
+    if original_ms is not None:
+        applied_ms = meta.get("screen_timeout_applied_ms")
+        in_run = f" → 任务期 {applied_ms}ms" if applied_ms else ""
+        if screen_restore is None:
+            tail = "（收尾自动恢复）"
+        elif screen_restore.get("skipped"):
+            tail = "（未恢复：--no-restore-screen）"
+        elif screen_restore.get("missing"):
+            tail = "（未找到记录，未恢复）"
+        elif screen_restore.get("ok"):
+            tail = f"（已恢复 {screen_restore.get('restored_ms', original_ms)}ms）"
+        else:
+            tail = f"（⚠️ 恢复失败：{screen_restore.get('error')}）"
+        lines.append(f"- 熄屏时间：原 {original_ms}ms{in_run}{tail}")
+    lines.append("")
     lines.append("## 汇总\n")
     lines.append(f"- 完成：{len(done)} 轮（累计浏览 {total_seconds} 秒）")
     unrecorded = [t for t in failed if str(t.get("result", "")).startswith("失败-")]
@@ -147,6 +174,11 @@ def main() -> int:
     )
     parser.add_argument("--note", default="", help="Reason or evidence")
     parser.add_argument("--finish", action="store_true", help="Mark the run as finished")
+    parser.add_argument(
+        "--no-restore-screen",
+        action="store_true",
+        help="收尾时不恢复 init_run.py 记录的原熄屏时间（默认恢复）",
+    )
     args = parser.parse_args()
 
     run_dir = os.path.expanduser(args.run_dir)
@@ -180,12 +212,29 @@ def main() -> int:
             fh.write(json.dumps(tasks[-1], ensure_ascii=False) + "\n")
 
     finished_at = None
+    screen_restore = None
     if args.finish:
         finished_at = datetime.now().isoformat(timespec="seconds")
+        state_path = os.path.join(run_dir, "screen_timeout.json")
+        if args.no_restore_screen:
+            screen_restore = {"ok": True, "skipped": True}
+        elif restore_screen_timeout is None:
+            screen_restore = {"ok": False, "error": "screen_timeout module unavailable"}
+        elif not os.path.exists(state_path):
+            screen_restore = {"ok": True, "noop": True, "missing": True}
+        else:
+            try:
+                screen_restore = restore_screen_timeout(meta.get("device") or None, run_dir)
+            except Exception as exc:  # 设备离线时不能挡住收尾
+                screen_restore = {"ok": False, "error": repr(exc)}
+            if not screen_restore.get("ok") and not screen_restore.get("noop"):
+                print(f"[screen] 熄屏时间恢复失败：{screen_restore.get('error')}", file=sys.stderr)
 
-    counts = write_report(report_path, meta, tasks, finished_at)
+    counts = write_report(report_path, meta, tasks, finished_at, screen_restore)
     counts["tasks_total"] = len(tasks)
     counts["report_path"] = report_path
+    if args.finish:
+        counts["screen_timeout_restore"] = screen_restore
     print(json.dumps(counts, ensure_ascii=False))
     return 0
 

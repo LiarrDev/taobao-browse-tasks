@@ -40,9 +40,10 @@
 与 `SKILL.md` 阶段 -1 / 阶段 0 相同，另外：
 
 ```bash
-python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module live --max-tasks 80 --max-minutes 60
-adb -s <serial> shell settings put system screen_off_timeout 1800000   # 防锁屏
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module live --max-tasks 80 --max-minutes 60 --device <serial>
 ```
+
+- 防锁屏已自动化：`init_run.py` 记录原熄屏时间并临时设为 30 分钟，`--finish` 自动恢复；**不要手写 `settings put`**。异常中断时手动跑 `scripts/screen_timeout.py --device <serial> --run-dir <run_dir> --restore`。
 
 - 上限 `max_tasks=80` 纯兜底，**真刹车是 `max_minutes=60`**。
 - **这个活动不可能自然收尾**：槽位做完立刻换新主播，时间给多少就刷多少。

@@ -31,13 +31,14 @@
 与 `SKILL.md` 阶段 -1 / 阶段 0 相同，运行目录带模块名：
 
 ```bash
-python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module welfare --max-tasks 150 --max-minutes 60
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module welfare --max-tasks 150 --max-minutes 60 --device <serial>
 ```
 
-⚠️ **开跑前先防锁屏**（中途锁屏 `secure=true`，ADB 解不开，只能等人工）：
+⚠️ **防锁屏已自动化**：`init_run.py --device ...` 会先记录手机当前 `screen_off_timeout`，任务期临时设为 30 分钟，`log_task.py --finish` 收尾时自动恢复。**不要手写 `settings put`**（原值会丢、收尾无法恢复）。会话异常中断时手动恢复：
 
 ```bash
-adb -s <serial> shell settings put system screen_off_timeout 1800000
+python3 .agents/skills/taobao-browse-tasks/scripts/screen_timeout.py \
+  --device <serial> --run-dir <run_dir> --restore
 ```
 
 ## W1 打开 deeplink 进活动页
@@ -158,5 +159,5 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 - **「浏览精选商品」页只滑 1 次**：浮标写「下滑浏览15秒」，实测**一次上滑 + 15 秒**即完成，连发滑动反而容易点进商品详情。
 - **「去芭芭农场施肥」不是玩法任务**：本模块内它是纯浏览——落地农场页静置 18 秒即完成，**不要点「施肥」**（会消耗肥料，还可能被当成玩法操作）。
 - **截图坐标 ≠ 屏幕坐标**：截图缩到 maxSize 以内，坐标点击前务必换算。
-- **中途自动锁屏会卡死整场**：开跑前设 `screen_off_timeout 1800000`；已锁屏就请用户解锁。
+- **中途自动锁屏会卡死整场**：`init_run.py` 已自动记录并临时调长熄屏时间、`--finish` 恢复；已锁屏就请用户解锁。异常中断时手动跑 `screen_timeout.py --restore`。
 - **验证弹窗 / 账号失效**：与主流程同处置——滑块拼图人脸停手交人工、冷却 ≥ 30 分钟；落到 `UserLoginActivity` 不输任何凭据，停止本模块。

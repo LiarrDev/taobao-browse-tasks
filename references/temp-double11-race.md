@@ -43,9 +43,10 @@
 与 `SKILL.md` 阶段 -1 / 阶段 0 相同，另外：
 
 ```bash
-python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module race --max-tasks 80 --max-minutes 60
-adb -s <serial> shell settings put system screen_off_timeout 1800000   # 防锁屏，secure=true 时 ADB 解不开
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module race --max-tasks 80 --max-minutes 60 --device <serial>
 ```
+
+- 防锁屏已自动化：`init_run.py` 记录原熄屏时间并临时设为 30 分钟，`--finish` 自动恢复；**不要手写 `settings put`**。异常中断时手动跑 `scripts/screen_timeout.py --device <serial> --run-dir <run_dir> --restore`。
 
 耗时：滚动型一轮 ≈ 35~55 秒，静置型 ≈ 30 秒，60 分钟约 70~90 轮。`max_tasks=80` 纯兜底，**真刹车是 `max_minutes`**。
 
@@ -193,7 +194,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
 - **弹层行位在单次运行内极稳定**（整轮 15 次进出，第 3 行始终 `(1023,1174)`），可复用；但**跨运行 / 有槽位消失后必须重扫**。
 - **X 关闭按钮 ≈ (1095,544)**：关掉回赛车主页，左上「⚡ 剩余 N 能量」可读。弹层重开滚动位置保留。
 - **能量 pill 只在弹层打开时可见**；关掉弹层落到赛车主页后那个位置会被别的文案占掉。
-- **中途自动锁屏会卡死整场**：开跑前设 `screen_off_timeout 1800000`；已锁屏就请用户解锁（`input keyevent 26` / `224` + `wm dismiss-keyguard`）。
+- **中途自动锁屏会卡死整场**：`init_run.py` 已自动记录并临时调长熄屏时间、`--finish` 恢复；已锁屏就请用户解锁（`input keyevent 26` / `224` + `wm dismiss-keyguard`）。异常中断时手动跑 `screen_timeout.py --restore`。
 - **密度**：5 秒短槽位一轮只要 40~70 秒，很容易冲到 30+ 轮/小时（超铁律 13 的 25 轮/小时）。**每 8~10 轮停 1~2 分钟**，或在报告里显式标注超密度。
 - **循环保护**：Bash `sleep` 用不等长序列 + 递增 echo 标记（`sleep 3; echo "race-wait-1"` / `sleep 5; echo "race-wait-2"`）。保活走脚本单进程，不受影响。
 - **`report.md` 的「多轮槽位进度」一节不可信**：它按 `--name` 标题聚合，而弹层每轮换名（同一计数器 好物随心逛 → 搜一搜 → 看看#XX 互转），会把一条计数器拆成多行、把 `10/10` 判成「未满」、把中途才出现的行判成「做满」。**交付时以「当前进度 n/50」的位移为准**，并在报告里手写一节说明该口径（2026-10-27 运行：17 轮全部入账 24/50→41/50，聚合表却给出「做满 2 个 / 9 个槽位」）。

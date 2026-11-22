@@ -132,14 +132,15 @@ agent_created: true
 
 手机连不上时按序排查：换线换口 → 重开 USB 调试并允许授权 → `adb devices` 看 `unauthorized`/`offline` → **首次探测为空时隔几秒重查一次**（刚授权常返回空）。官方文档：<https://github.com/mobile-next/mobile-mcp>。
 
-依赖：Node.js v20+、adb（Android Platform Tools）在 PATH 上、手机端已开 USB 调试并授权；**跑长任务前把自动锁屏调到最长**（熄屏后滑动与识屏全部失效，`secure` 锁屏 adb 解不开）。
+依赖：Node.js v20+、adb（Android Platform Tools）在 PATH 上、手机端已开 USB 调试并授权；**熄屏会让滑动与识屏全部失效**（`secure` 锁屏 adb 解不开），所以 `init_run.py` 会记录原熄屏时间并临时调长，`--finish` 时恢复，见阶段 0 第 4 步。
 
 ### 阶段 0：环境与前置
 
 1. 加载 `mobile_*` 工具，之后统一用 DeferExecuteTool 调用；清单与调用要点见 `references/mobile-mcp-playbook.md`。
 2. `mobile_list_available_devices` → 选 `platform=android` 且 `type=real` 的设备：仅一台直接用并报出设备名；多台停下来问用户；**没有本地设备不要静默申请远程**（计费），先询问。
 3. `mobile_get_screen_size` → 记 W×H，后续滑动距离按 H 比例换算。
-4. `python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module <both|farm|coins|signin|blackbox|welfare|live|race>` → 拿到运行目录与日志路径（默认 `.taobao-task-runs/<时间戳>/`），之后所有截图与记录都写这里。
+4. `python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module <both|farm|coins|signin|blackbox|welfare|live|race> --device <serial>` → 拿到运行目录与日志路径（默认 `.taobao-task-runs/<时间戳>/`），之后所有截图与记录都写这里。
+   - **熄屏时间自动处理（必须带 `--device`）**：`init_run.py` 先读取并记录手机当前 `screen_off_timeout`（写入 `screen_timeout.json` 与 `meta.json`），再把任务期临时设为 **30 分钟**；`log_task.py --finish` 收尾时恢复原值。要改时长用 `--screen-timeout-ms`（0 = 只记录不改），要完全关闭用 `--no-screen-timeout`。**不要手写 `adb shell settings put ... screen_off_timeout`**，否则原值会丢、收尾无法恢复。
    - **建目录前会自动清掉 `.taobao-task-runs/` 下超过 3 天的运行目录**（截图很占地方，几周能堆到几个 GB）。想留旧日志加 `--no-prune`，改保留期用 `--keep-days N`；也可单独跑 `scripts/prune_runs.py`（默认干跑只报告，`--apply` 才删）。
    - 清理范围只限「名字像一次运行、且内含 `report.md` / `shots` / `meta.json` 等产物」的**直接子目录**，符号链接与其它文件一律不碰；根目录是 `/` 或用户 home 时直接拒绝执行。
    - 输出的 JSON 带 `prune` 字段（`removed` / `kept` / `freed_bytes`）。有清理时在汇报里带一句「清掉 N 个旧目录，释放 X MB」即可。
@@ -297,6 +298,14 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py \
 python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_dir> --finish
 ```
 
+- `--finish` 会**自动把熄屏时间恢复成 `init_run.py` 记录的原值**，报告头部会写明「原 X ms → 任务期 Y ms（已恢复 X ms）」；幂等，重复执行不会重复改。
+- **会话异常中断（没来得及 `--finish`）** 时手动恢复：
+
+```bash
+python3 .agents/skills/taobao-browse-tasks/scripts/screen_timeout.py \
+  --device <serial> --run-dir <run_dir> --restore
+```
+
 ## 汇报格式
 
 每个模块一张表，多轮槽位按轮次逐行列出：
@@ -325,6 +334,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 | 坐标点击偏了 | 截图坐标 ≠ 屏幕坐标，先按返回的换算系数折算；能用 ref 就用 ref |
 | 白屏 / 元素只有根节点 | 多半没渲染完，等一轮再 list |
 | 滑动无响应且 list 为空 | 可能已锁屏，提醒用户解锁后继续 |
+| 会话异常中断，未执行 `--finish` | 熄屏时间还没恢复：跑 `scripts/screen_timeout.py --device <serial> --run-dir <run_dir> --restore`；先 `--status` 可对比当前值与记录值 |
 | 点商品卡落到 `UserLoginActivity`；重启淘宝后首页底部出现「立即登录」 | 账号会话已过期，不是任务问题：**不输任何凭据、不点「立即登录」**。当前槽位记失败并备注「截断于 x/N」，停止本模块交人工重新登录；登录后冷却 ≥ 30 分钟再续做 |
 | 只做了半页就判「没任务」 | 没滚到底，见铁律 7 |
 | 顶部提示条换成「下单得 X」 | 只是换话术，不代表记满时长；仍以锚点为准 |
@@ -347,6 +357,7 @@ python3 .agents/skills/taobao-browse-tasks/scripts/log_task.py --run-dir <run_di
 - `references/task-classification.md` — 任务白/黑名单判定，**动手前必读**
 - `references/module-entry.md` — 各模块入口、UI 锚点与兜底路径
 - `references/mobile-mcp-playbook.md` — 工具清单、坐标换算、滑动与等待要点
+- `scripts/screen_timeout.py` — 记录 / 临时调长 / 恢复手机熄屏时间（`init_run.py` 与 `--finish` 自动调用，也可手动 `--save/--restore/--status`）
 - `references/blackbox-keys.md` — 小黑盒集钥匙全流程（手动触发）
 - `references/welfare-shop.md` — 淘宝福利购全流程（手动触发）
 <!-- TEMP-DOUBLE11-RACE-BEGIN -->

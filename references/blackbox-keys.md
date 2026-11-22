@@ -31,13 +31,14 @@
 与 `SKILL.md` 阶段 -1 / 阶段 0 相同，运行目录带模块名：
 
 ```bash
-python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module blackbox --max-tasks 80 --max-minutes 60
+python3 .agents/skills/taobao-browse-tasks/scripts/init_run.py --module blackbox --max-tasks 80 --max-minutes 60 --device <serial>
 ```
 
-⚠️ **开跑前先防锁屏**（中途锁屏 `secure=true`，ADB 解不开，只能等人工）：
+⚠️ **防锁屏已自动化**：`init_run.py --device ...` 会先记录手机当前 `screen_off_timeout`，任务期临时设为 30 分钟，`log_task.py --finish` 收尾时自动恢复。**不要手写 `settings put`**（原值会丢、收尾无法恢复）。会话异常中断时手动恢复：
 
 ```bash
-adb -s <serial> shell settings put system screen_off_timeout 1800000
+python3 .agents/skills/taobao-browse-tasks/scripts/screen_timeout.py \
+  --device <serial> --run-dir <run_dir> --restore
 ```
 
 ## B1 打开 deeplink 进活动页
@@ -163,7 +164,7 @@ adb -s <serial> shell am start -a android.intent.action.VIEW -d "https://m.tb.cn
 - **ref 点击会点偏是常态**：H5 里同 label 节点重叠常见，点完一律校验落点。
 - **截图用 adb 抓**：`adb -s <serial> exec-out screencap -p > <path>`。`mobile_save_screenshot` 受 MCP 白名单目录限制，写不进 run 目录。
 - **截图坐标 ≠ 屏幕坐标**：截图缩到 maxSize 以内，坐标点击前务必换算。
-- **中途自动锁屏会卡死整场**：开跑前设 `screen_off_timeout 1800000`；已锁屏就请用户解锁。
+- **中途自动锁屏会卡死整场**：`init_run.py` 已自动记录并临时调长熄屏时间、`--finish` 恢复；已锁屏就请用户解锁。异常中断时手动跑 `screen_timeout.py --restore`。
 - **验证弹窗**：本模块不滑动，触发率低；万一静置期间弹出，立即停手交人工，冷却 ≥ 30 分钟，绝不重试绕过。
 - **循环保护**：Bash `sleep` 用不等长序列 + 递增 echo 标记。
 - **活动有时限**：倒计时结束或入口消失即失效，不要反复重进，汇报即可。

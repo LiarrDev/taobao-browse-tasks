@@ -89,13 +89,13 @@ git clone https://github.com/LiarrDev/taobao-browse-tasks.git .agents/skills/tao
 | Android 真机 | ✅ 已实测验证（华为 Mate 30 Pro 5G / Android 12） |
 | iOS 真机 | 🟡 **未在 iOS 上验证过**；但 [mobile-mcp](https://github.com/mobile-next/mobile-mcp) 本身支持 iOS 驱动，**理论上 iOS 设备也能使用本 skill** |
 
-iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与连接走 mobile-mcp 的 iOS 通道（而非 adb）、返回手势不是 `BACK` 按钮而是边缘滑动、App 启动用的是 bundle id 而非 package name。`SKILL.md` 里的判定规则与流程本身与平台无关。
+iOS 上的差异主要在这几处，遇到时可据此调整：设备发现与连接走 mobile-mcp 的 iOS 通道（而非 adb）、返回手势不是 `BACK` 按钮而是边缘滑动、App 启动用的是 bundle id 而非 package name。`SKILL.md` 里的判定规则与流程本身与平台无关。**熄屏时间的自动记录/恢复依赖 adb，仅 Android 可用**；iOS 上会跳过并告警，需要手动保持屏幕常亮。
 
 ### 手机端前置
 
 - Android：开发者选项 → **USB 调试**已开，并已授权本机
 - iOS：按 mobile-mcp 文档的 iOS 通道完成配对与信任
-- **建议开启屏幕常亮**（开发者选项里的「充电时不锁定屏幕」，或把自动锁屏调到最长时间）。跑满 60 分钟的任务期间屏幕一旦熄灭，滑动与识屏都会失效，skill 会误判为卡死。
+- **熄屏时间由 skill 自动管理**：`init_run.py --device ...` 会先读取并记录手机当前 `screen_off_timeout`，任务期临时设为 30 分钟，`log_task.py --finish` 收尾时恢复原值（报告里会写明）。不想改设置可加 `--no-screen-timeout`；想调时长用 `--screen-timeout-ms`。不用再手动去开发者选项里改。
 
 ### 不需要无障碍权限
 
@@ -129,7 +129,8 @@ references/blackbox-keys.md         模块「小黑盒集钥匙」（手动触�
 references/welfare-shop.md          模块「淘宝福利购」（手动触发，默认运行不包含）
 references/temp-double11-live.md    临时活动「双十一直播体力」（手动触发，可整份删除）
 references/temp-double11-race.md    临时活动「双十一赛车活动」（手动触发，可整份删除）
-scripts/init_run.py                 创建本次运行目录与日志骨架（建之前自动清理 3 天前的旧目录）
+scripts/init_run.py                 创建运行目录；记录并临时调长熄屏时间；建之前自动清理 3 天前的旧目录
+scripts/screen_timeout.py           记录 / 临时调长 / 恢复手机熄屏时间（--save / --restore / --status）
 scripts/prune_runs.py               单独清理运行目录：默认干跑，--apply 真删
 scripts/log_task.py                 记录单条任务结果，--finish 生成报告
 scripts/keepalive_swipe.py          拟人化滑动（贝塞尔弧线 + 变速 + 抖动）+ 验证弹窗拦截（退出码 42）
@@ -166,4 +167,4 @@ python3 .agents/skills/taobao-browse-tasks/scripts/prune_runs.py --keep-days 7 -
 
 - 仅供个人学习研究，请遵守淘宝的用户协议与当地法律法规。
 - 淘宝 UI 随时可能改版，锚点文案失效时以 `references/module-entry.md` 的兜底路径为准。
-- 跑任务前**建议开启屏幕常亮**并插上电源：中途熄屏会让滑动与识屏全部失效。
+- 跑任务前建议插上电源：中途熄屏会让滑动与识屏全部失效。熄屏时间由 `init_run.py` 自动记录并临时调长、`--finish` 恢复；会话异常中断时用 `scripts/screen_timeout.py --restore` 手动恢复。
