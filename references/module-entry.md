@@ -126,7 +126,9 @@
 
 ## 小黑盒集钥匙
 
-入口是 deeplink，不走金刚区：`adb shell am start -a android.intent.action.VIEW -d "https://m.tb.cn/h.jVRERsc" com.taobao.taobao` → 落地 `WebView text="开盒有喜-线上"` → 点「做任务集钥匙」（无文本节点，中心 ≈ (789,550)）拉起任务弹层。完整流程见 `blackbox-keys.md`。
+入口是 deeplink，不走金刚区：`adb shell am start -a android.intent.action.VIEW -d "https://m.tb.cn/h.jLEBVst" com.taobao.taobao` → 落地 `WebView text="开盒有喜-线上"` → 点「做任务集钥匙」（无文本节点，中心 ≈ (789,550)）拉起任务弹层。完整流程见 `blackbox-keys.md`。
+
+> 短链过期要向用户要新链，别判活动下线。
 
 ## 淘宝福利购
 
