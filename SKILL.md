@@ -171,7 +171,7 @@ agent_created: true
 
 1. `mobile_list_elements_on_screen`，默认 `format: "text"`（每行已含 ref / 坐标 / 文案 / id，token 约为 `json` 一半；只有要喂脚本解析时才用 `json`）。
 2. 识别列表结构：每行 = 标题 + 副标题（奖励文案）+ 右侧动作按钮；列表页特征锚点是「集肥料 / 赚更多金币 / 今日任务 / 去浏览 / 已领取」。
-3. 逐行分类（严格按 `references/task-classification.md`）：`BROWSE` 入队并标子类（普通 / `SEARCH` 搜索型 / `SEARCH-AI` AI 搜索型 / `STATIC` 静置型）；`GAME` / `THIRD_PARTY` / `OTHER` / `DONE` 记入跳过清单并注明原因与命中关键词。
+3. 逐行分类（严格按 `references/task-classification.md`）：`BROWSE` 入队并标子类（普通 / `SEARCH` 搜索型 / `SEARCH-VOICE` 语音搜索型 / `SEARCH-AI` AI 搜索型 / `STATIC` 静置型）；`GAME` / `THIRD_PARTY` / `OTHER` / `DONE` 记入跳过清单并注明原因与命中关键词。
 4. **列表必须滚到底才算遍历完**（最常见漏做点）：
    - 顺序：处理当前屏的 `BROWSE` → 下滑 → 重新识屏 → 继续找。下滑用 `keepalive_swipe.py --swipes 1`，起点取列表区域中部（避开顶部 banner 与底部横幅），行程 ≈ H×0.33（1176×2400 屏取 780~820），并放慢到 750~1000ms——**慢速长行程才推得动弹层**。
    - ⚠️ **dump 冻结只发生在「任务列表弹层内部滚动」**：在 poplayer 弹层里滑动后，弹层子树整块返回滚动前的旧树（ref、坐标一字不差），但同一次 dump 的背景页面节点是新的 → 通道没坏，只是弹层不同步。会场 / 搜索结果 / feeds 落地页滑动后 dump 正常刷新，无需截图。
